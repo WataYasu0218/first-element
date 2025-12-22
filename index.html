@@ -2,16 +2,13 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>冬休み大冒険：ちえの勇者</title>
     
-    <!-- Tailwind CSS (スタイリング用) -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Babel (JSX変換用) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- Import Map (Reactとライブラリの読み込み設定) -->
     <script type="importmap">
     {
         "imports": {
@@ -23,6 +20,24 @@
     </script>
 
     <style>
+        /* 基本設定：スクロール禁止とタッチ操作の最適化 */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* 全体のスクロールを禁止 */
+            touch-action: manipulation; /* ダブルタップズーム防止 */
+            background-color: #f0f9ff;
+            font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            -webkit-user-select: none; /* テキスト選択禁止（アプリっぽくする） */
+            user-select: none;
+        }
+        #root {
+            width: 100%;
+            height: 100%;
+        }
+
         /* カスタムアニメーション定義 */
         @keyframes slash {
             0% { left: 120%; top: -20%; opacity: 0; transform: rotate(45deg) scale(0.5); }
@@ -59,12 +74,6 @@
         
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .animate-spin-slow { animation: spin 3s linear infinite; }
-        
-        body {
-            font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-            background-color: #f0f9ff;
-            touch-action: manipulation; /* ダブルタップズーム防止 */
-        }
     </style>
 </head>
 <body>
@@ -118,7 +127,7 @@
             const hourDeg = ((hour % 12) / 12) * 360 + (minute / 60) * 30;
 
             return (
-                <div className="relative w-24 h-24 bg-white rounded-full border-4 border-gray-700 shadow-md mx-auto my-1 box-content">
+                <div className="relative w-20 h-20 bg-white rounded-full border-4 border-gray-700 shadow-md mx-auto my-1 box-content flex-shrink-0">
                 {[...Array(12)].map((_, i) => (
                     <div key={i} className="absolute w-full h-full left-0 top-0" style={{ transform: `rotate(${i * 30}deg)` }}>
                     <div className="mx-auto w-0.5 h-1.5 bg-gray-400 mt-0.5"></div>
@@ -129,23 +138,23 @@
                 <div className="absolute h-1 w-2 bg-gray-600 top-1/2 right-0 -translate-y-1/2 mr-0.5" />
                 <div className="absolute h-1 w-2 bg-gray-600 top-1/2 left-0 -translate-y-1/2 ml-0.5" />
                 <div className="absolute top-1/2 left-1/2 w-3 h-3 bg-black rounded-full -translate-x-1/2 -translate-y-1/2 z-20 border-2 border-white" />
-                <div className="absolute top-1/2 left-1/2 w-1.5 h-7 bg-black rounded-full z-10 origin-bottom" style={{ transform: `translate(-50%, -100%) rotate(${hourDeg}deg)` }} />
-                <div className="absolute top-1/2 left-1/2 w-1 h-10 bg-gray-800 rounded-full z-10 origin-bottom" style={{ transform: `translate(-50%, -100%) rotate(${minuteDeg}deg)` }} />
+                <div className="absolute top-1/2 left-1/2 w-1.5 h-6 bg-black rounded-full z-10 origin-bottom" style={{ transform: `translate(-50%, -100%) rotate(${hourDeg}deg)` }} />
+                <div className="absolute top-1/2 left-1/2 w-1 h-8 bg-gray-800 rounded-full z-10 origin-bottom" style={{ transform: `translate(-50%, -100%) rotate(${minuteDeg}deg)` }} />
                 </div>
             );
         };
 
         const MoneyVisual = ({ count100, count10, count1 }) => {
             return (
-                <div className="flex flex-wrap justify-center gap-2 my-2 max-w-[200px] mx-auto">
+                <div className="flex flex-wrap justify-center gap-1 my-1 max-w-[200px] mx-auto">
                 {[...Array(count100)].map((_, i) => (
-                    <div key={`100-${i}`} className="w-10 h-10 rounded-full bg-gray-200 border-2 border-gray-400 flex items-center justify-center font-bold text-gray-600 text-sm shadow-sm">100</div>
+                    <div key={`100-${i}`} className="w-9 h-9 rounded-full bg-gray-200 border-2 border-gray-400 flex items-center justify-center font-bold text-gray-600 text-xs shadow-sm">100</div>
                 ))}
                 {[...Array(count10)].map((_, i) => (
-                    <div key={`10-${i}`} className="w-9 h-9 rounded-full bg-orange-300 border-2 border-orange-500 flex items-center justify-center font-bold text-orange-800 text-sm shadow-sm">10</div>
+                    <div key={`10-${i}`} className="w-8 h-8 rounded-full bg-orange-300 border-2 border-orange-500 flex items-center justify-center font-bold text-orange-800 text-xs shadow-sm">10</div>
                 ))}
                 {[...Array(count1)].map((_, i) => (
-                    <div key={`1-${i}`} className="w-7 h-7 rounded-full bg-gray-100 border-2 border-gray-300 flex items-center justify-center font-bold text-gray-500 text-xs shadow-sm">1</div>
+                    <div key={`1-${i}`} className="w-6 h-6 rounded-full bg-gray-100 border-2 border-gray-300 flex items-center justify-center font-bold text-gray-500 text-[10px] shadow-sm">1</div>
                 ))}
                 </div>
             );
@@ -155,16 +164,16 @@
             return (
                 <div className="flex flex-wrap justify-center gap-1 my-2 max-w-[150px] mx-auto">
                 {[...Array(count)].map((_, i) => (
-                    <div key={i} className="w-8 h-8 bg-blue-400 border-b-4 border-r-4 border-blue-600 rounded-sm"></div>
+                    <div key={i} className="w-7 h-7 bg-blue-400 border-b-4 border-r-4 border-blue-600 rounded-sm"></div>
                 ))}
                 </div>
             );
         };
 
         const ShapeVisual = ({ shape }) => {
-            if (shape === 'さんかく') return <div className="w-0 h-0 border-l-[40px] border-l-transparent border-r-[40px] border-r-transparent border-b-[70px] border-b-green-500 mx-auto my-4 drop-shadow-md"></div>;
-            if (shape === 'しかく') return <div className="w-20 h-20 bg-blue-500 mx-auto my-4 border-4 border-blue-700 shadow-md"></div>;
-            if (shape === 'まる') return <div className="w-20 h-20 bg-red-500 rounded-full mx-auto my-4 border-4 border-red-700 shadow-md"></div>;
+            if (shape === 'さんかく') return <div className="w-0 h-0 border-l-[35px] border-l-transparent border-r-[35px] border-r-transparent border-b-[60px] border-b-green-500 mx-auto my-2 drop-shadow-md"></div>;
+            if (shape === 'しかく') return <div className="w-16 h-16 bg-blue-500 mx-auto my-2 border-4 border-blue-700 shadow-md"></div>;
+            if (shape === 'まる') return <div className="w-16 h-16 bg-red-500 rounded-full mx-auto my-2 border-4 border-red-700 shadow-md"></div>;
             return null;
         };
 
@@ -795,16 +804,16 @@
             };
 
             const renderHeader = () => (
-                <div className="bg-sky-600 p-4 text-white flex justify-between items-center shadow-md z-30">
+                <div className="bg-sky-600 p-2 text-white flex justify-between items-center shadow-md z-30 h-14 flex-shrink-0">
                     <div className="flex items-center gap-2">
-                        <div className="bg-sky-800 p-2 rounded-full border-2 border-yellow-400">
-                            <span className="text-2xl">🦸</span>
+                        <div className="bg-sky-800 p-1.5 rounded-full border-2 border-yellow-400">
+                            <span className="text-xl">🦸</span>
                         </div>
                         <div>
-                            <div className="font-bold text-lg">Lv.{player.level} {player.name}</div>
-                            <div className="flex items-center gap-1 text-sm">
-                                <Heart size={16} className="text-red-400" fill="currentColor" />
-                                <div className="w-24 h-3 bg-gray-700 rounded-full overflow-hidden border border-gray-600">
+                            <div className="font-bold text-sm">Lv.{player.level} {player.name}</div>
+                            <div className="flex items-center gap-1 text-xs">
+                                <Heart size={14} className="text-red-400" fill="currentColor" />
+                                <div className="w-20 h-2.5 bg-gray-700 rounded-full overflow-hidden border border-gray-600">
                                     <div className="bg-red-500 h-full transition-all duration-300" style={{ width: `${(player.hp / player.maxHp) * 100}%` }} />
                                 </div>
                                 <span>{player.hp}/{player.maxHp}</span>
@@ -812,7 +821,7 @@
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1 bg-yellow-500 px-3 py-1 rounded-full text-sky-900 font-bold">
+                        <div className="flex items-center gap-1 bg-yellow-500 px-2 py-0.5 rounded-full text-sky-900 font-bold text-sm">
                             <span>💰</span>
                             <span>{player.coins}</span>
                         </div>
@@ -868,26 +877,26 @@
             }
 
             const renderHome = () => (
-                <div className="flex flex-col items-center justify-center h-full space-y-8 p-4 bg-blue-50">
+                <div className="flex flex-col items-center justify-center h-full space-y-6 p-4 bg-blue-50 overflow-y-auto">
                     <h1 className="text-4xl font-extrabold text-sky-600 tracking-wider drop-shadow-sm text-center">
                         冬休み大冒険<br/><span className="text-2xl text-orange-500">ちえの勇者</span>
                     </h1>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-md">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-md px-4">
                         <button 
                             onClick={() => startBattle('math')}
-                            className="bg-gradient-to-br from-blue-400 to-blue-600 text-white p-6 rounded-2xl shadow-xl transform transition hover:scale-105 active:scale-95 flex flex-col items-center gap-2 border-b-8 border-blue-800"
+                            className="bg-gradient-to-br from-blue-400 to-blue-600 text-white p-6 rounded-2xl shadow-xl transform transition active:scale-95 flex flex-col items-center gap-2 border-b-8 border-blue-800"
                         >
-                            <Calculator size={48} />
+                            <Calculator size={40} />
                             <span className="text-2xl font-bold">さんすう</span>
                             <span className="text-sm opacity-90">けいさん・とけい</span>
                         </button>
 
                         <button 
                             onClick={() => startBattle('jp')}
-                            className="bg-gradient-to-br from-red-400 to-red-600 text-white p-6 rounded-2xl shadow-xl transform transition hover:scale-105 active:scale-95 flex flex-col items-center gap-2 border-b-8 border-red-800"
+                            className="bg-gradient-to-br from-red-400 to-red-600 text-white p-6 rounded-2xl shadow-xl transform transition active:scale-95 flex flex-col items-center gap-2 border-b-8 border-red-800"
                         >
-                            <Book size={48} />
+                            <Book size={40} />
                             <span className="text-2xl font-bold">こくご</span>
                             <span className="text-sm opacity-90">かんじ・ことば</span>
                         </button>
@@ -921,8 +930,8 @@
                         )}
 
                         {/* Battle Header */}
-                        <div className="absolute top-0 left-0 right-0 h-16 z-30 flex items-center justify-between px-4 pt-2">
-                            <button onClick={() => setScreen('home')} className="bg-white/90 p-2 rounded-full shadow-md text-gray-600 active:scale-95">
+                        <div className="absolute top-0 left-0 right-0 h-14 z-30 flex items-center justify-between px-3 pt-2 pointer-events-none">
+                            <button onClick={() => setScreen('home')} className="bg-white/90 p-2 rounded-full shadow-md text-gray-600 active:scale-95 pointer-events-auto">
                                 <Home size={20} />
                             </button>
 
@@ -944,21 +953,21 @@
                             </div>
                         </div>
 
-                        {/* Battle Scene */}
-                        <div className={`flex-shrink-0 pt-20 pb-4 px-4 flex flex-col items-center justify-center transition-colors duration-500 min-h-[220px] ${bgClass}`}>
-                            <div className="text-center mb-2 z-10 w-full max-w-xs relative">
-                                <div className={`text-xl font-extrabold drop-shadow-md ${currentMonster.isBoss ? 'text-white' : 'text-gray-800'}`}>{currentMonster.name}</div>
-                                <div className="w-full h-4 bg-gray-900/30 rounded-full mx-auto mt-1 overflow-hidden border-2 border-white/50 shadow-lg relative">
+                        {/* Battle Scene (Fixed Height Proportion) */}
+                        <div className={`flex-shrink-0 flex flex-col items-center justify-end pb-2 px-4 transition-colors duration-500 ${bgClass} h-[40%] min-h-[200px]`}>
+                            <div className="text-center mb-1 z-10 w-full max-w-xs relative">
+                                <div className={`text-lg font-extrabold drop-shadow-md ${currentMonster.isBoss ? 'text-white' : 'text-gray-800'}`}>{currentMonster.name}</div>
+                                <div className="w-full h-3 bg-gray-900/30 rounded-full mx-auto mt-0.5 overflow-hidden border-2 border-white/50 shadow-lg relative">
                                     <div 
                                         className="bg-gradient-to-r from-red-500 to-orange-500 h-full transition-all duration-300"
                                         style={{ width: `${Math.max(0, (monsterHp / currentMonster.hp) * 100)}%` }}
                                     ></div>
                                 </div>
-                                <div className={`text-xs font-bold ${currentMonster.isBoss ? 'text-gray-300' : 'text-gray-600'}`}>HP: {Math.max(0, monsterHp)}</div>
+                                <div className={`text-[10px] font-bold ${currentMonster.isBoss ? 'text-gray-300' : 'text-gray-600'}`}>HP: {Math.max(0, monsterHp)}</div>
                             </div>
 
-                            <div className={`relative flex justify-center items-center h-32 w-32 z-0 transition-transform duration-200 ${showHitEffect ? 'animate-shake-hard filter brightness-200' : ''}`}>
-                                <span className={`text-8xl filter drop-shadow-2xl transform transition-all duration-500 ${currentMonster.isBoss ? 'scale-125' : ''}`}>
+                            <div className={`relative flex justify-center items-center h-28 w-28 z-0 transition-transform duration-200 ${showHitEffect ? 'animate-shake-hard filter brightness-200' : ''}`}>
+                                <span className={`text-7xl filter drop-shadow-2xl transform transition-all duration-500 ${currentMonster.isBoss ? 'scale-125' : ''}`}>
                                     {currentMonster.icon}
                                 </span>
                                 {/* 斬撃エフェクト */}
@@ -967,28 +976,28 @@
                             </div>
                         </div>
 
-                        {/* Question & Input Area */}
-                        <div className="flex-1 bg-white rounded-t-3xl shadow-[0_-8px_20px_-5px_rgba(0,0,0,0.1)] p-4 z-10 -mt-6 flex flex-col overflow-hidden relative">
-                            <div className="flex-shrink-0 bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-3 mb-2 text-center shadow-inner max-h-[40%] overflow-y-auto">
-                                <p className="text-lg md:text-xl font-bold text-gray-800 whitespace-pre-wrap leading-relaxed break-words">
+                        {/* Question & Input Area (Takes Remaining Space) */}
+                        <div className="flex-1 bg-white rounded-t-3xl shadow-[0_-8px_20px_-5px_rgba(0,0,0,0.1)] p-3 z-10 -mt-4 flex flex-col overflow-hidden relative h-[60%]">
+                            <div className="flex-shrink-0 bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-2 mb-2 text-center shadow-inner max-h-[35%] overflow-y-auto">
+                                <p className="text-lg md:text-xl font-bold text-gray-800 whitespace-pre-wrap leading-tight break-words">
                                     {question.question}
                                 </p>
                                 {renderVisualProblem(question)}
                             </div>
 
-                            <div className="flex-1 flex flex-col justify-center w-full max-w-md mx-auto min-h-0"> 
+                            <div className="flex-1 flex flex-col justify-end w-full max-w-md mx-auto min-h-0"> 
                                 {question.type === 'calc' && (
-                                    <div className="flex flex-col gap-2 h-full justify-end pb-2">
-                                        <div className="text-3xl font-mono border-b-4 border-gray-300 w-full text-center py-1 mb-2 text-gray-700 bg-gray-50 rounded h-12 flex items-center justify-center">
+                                    <div className="flex flex-col gap-1.5 h-full justify-end pb-1">
+                                        <div className="text-3xl font-mono border-b-4 border-gray-300 w-full text-center py-0.5 mb-1 text-gray-700 bg-gray-50 rounded h-10 flex items-center justify-center">
                                             {userAnswer}
                                             <span className="animate-pulse ml-1 w-0.5 h-6 bg-gray-400"></span>
                                         </div>
-                                        <div className="grid grid-cols-3 gap-2 w-full flex-1 min-h-0">
+                                        <div className="grid grid-cols-3 gap-1.5 w-full flex-1 min-h-0">
                                             {[1,2,3,4,5,6,7,8,9].map(n => (
                                                 <button 
                                                     key={n}
                                                     onClick={() => setUserAnswer(prev => (prev.length < 3 ? prev + n : prev))}
-                                                    className="bg-white border-b-4 border-gray-200 text-blue-600 font-bold text-2xl rounded-xl active:border-b-0 active:translate-y-1 shadow-sm touch-manipulation flex items-center justify-center active:bg-blue-50"
+                                                    className="bg-white border-b-4 border-gray-200 text-blue-600 font-bold text-xl rounded-lg active:border-b-0 active:translate-y-1 shadow-sm touch-manipulation flex items-center justify-center active:bg-blue-50"
                                                     disabled={!timerActive}
                                                 >
                                                     {n}
@@ -996,7 +1005,7 @@
                                             ))}
                                             <button 
                                                 onClick={() => setUserAnswer('')} 
-                                                className="bg-red-50 text-red-500 font-bold rounded-xl border-b-4 border-red-200 active:border-b-0 active:translate-y-1 touch-manipulation flex items-center justify-center"
+                                                className="bg-red-50 text-red-500 font-bold rounded-lg border-b-4 border-red-200 active:border-b-0 active:translate-y-1 touch-manipulation flex items-center justify-center"
                                                 disabled={!timerActive}
                                             >
                                                 ✖
@@ -1004,29 +1013,29 @@
                                             <button 
                                                 key={0}
                                                 onClick={() => setUserAnswer(prev => (prev.length < 3 ? prev + 0 : prev))}
-                                                className="bg-white border-b-4 border-gray-200 text-blue-600 font-bold text-2xl rounded-xl active:border-b-0 active:translate-y-1 shadow-sm touch-manipulation flex items-center justify-center active:bg-blue-50"
+                                                className="bg-white border-b-4 border-gray-200 text-blue-600 font-bold text-xl rounded-lg active:border-b-0 active:translate-y-1 shadow-sm touch-manipulation flex items-center justify-center active:bg-blue-50"
                                                 disabled={!timerActive}
                                             >
                                                 0
                                             </button>
                                             <button 
                                                 onClick={() => handleAnswer(userAnswer)} 
-                                                className="bg-blue-500 text-white font-bold rounded-xl text-xl border-b-4 border-blue-700 active:border-b-0 active:translate-y-1 touch-manipulation disabled:bg-gray-400 disabled:border-gray-500 flex items-center justify-center shadow-lg"
+                                                className="bg-blue-500 text-white font-bold rounded-lg text-lg border-b-4 border-blue-700 active:border-b-0 active:translate-y-1 touch-manipulation disabled:bg-gray-400 disabled:border-gray-500 flex items-center justify-center shadow-lg"
                                                 disabled={!timerActive || userAnswer === ''}
                                             >
-                                                OK！
+                                                OK
                                             </button>
                                         </div>
                                     </div>
                                 )}
 
                                 {question.type === 'select' && (
-                                    <div className="flex flex-col gap-2 h-full justify-center">
+                                    <div className="flex flex-col gap-3 h-full justify-center py-2">
                                         {question.options.map((opt, i) => (
                                             <button
                                                 key={i}
                                                 onClick={() => handleAnswer(opt)}
-                                                className="bg-white border-2 border-blue-100 text-blue-800 font-bold text-xl py-3 rounded-2xl shadow-sm transition active:scale-95 active:bg-blue-50 touch-manipulation disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 flex-1 max-h-16 flex items-center justify-center"
+                                                className="bg-white border-2 border-blue-100 text-blue-800 font-bold text-xl py-2 rounded-xl shadow-sm transition active:scale-95 active:bg-blue-50 touch-manipulation disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 flex-1 flex items-center justify-center"
                                                 disabled={!timerActive}
                                             >
                                                 {opt}
@@ -1036,22 +1045,22 @@
                                 )}
 
                                 {question.type === 'write' && (
-                                    <div className="flex flex-col gap-2 h-full justify-end pb-2">
-                                        <div className="flex gap-2 min-h-[50px] items-center justify-center p-2 bg-gray-100 rounded-xl w-full flex-shrink-0">
+                                    <div className="flex flex-col gap-2 h-full justify-end pb-1">
+                                        <div className="flex gap-2 min-h-[44px] items-center justify-center p-2 bg-gray-100 rounded-xl w-full flex-shrink-0">
                                             {userAnswer.split('').map((char, i) => (
-                                                <div key={i} className="w-10 h-10 bg-white rounded shadow flex items-center justify-center text-xl font-bold text-gray-800">
+                                                <div key={i} className="w-9 h-9 bg-white rounded shadow flex items-center justify-center text-lg font-bold text-gray-800">
                                                     {char}
                                                 </div>
                                             ))}
-                                            {userAnswer.length === 0 && <span className="text-gray-400 text-sm">もじを えらんでね</span>}
+                                            {userAnswer.length === 0 && <span className="text-gray-400 text-xs">もじを えらんでね</span>}
                                         </div>
                                         
-                                        <div className="flex gap-2 flex-wrap justify-center flex-1 content-center">
+                                        <div className="flex gap-1.5 flex-wrap justify-center flex-1 content-center overflow-y-auto">
                                             {question.chars.map((char, i) => (
                                                 <button
                                                     key={i}
                                                     onClick={() => setUserAnswer(prev => prev + char)}
-                                                    className="w-12 h-12 bg-white border-b-4 border-orange-200 rounded-xl text-2xl font-bold text-orange-800 shadow active:border-b-0 active:translate-y-1 touch-manipulation disabled:bg-gray-200 disabled:text-gray-400 flex items-center justify-center"
+                                                    className="w-11 h-11 bg-white border-b-4 border-orange-200 rounded-lg text-xl font-bold text-orange-800 shadow active:border-b-0 active:translate-y-1 touch-manipulation disabled:bg-gray-200 disabled:text-gray-400 flex items-center justify-center"
                                                     disabled={!timerActive}
                                                 >
                                                     {char}
@@ -1059,17 +1068,17 @@
                                             ))}
                                         </div>
 
-                                        <div className="flex gap-2 w-full mt-2 h-14 flex-shrink-0">
+                                        <div className="flex gap-2 w-full mt-1 h-12 flex-shrink-0">
                                             <button 
                                                 onClick={() => setUserAnswer('')} 
-                                                className="flex-1 bg-gray-200 text-gray-600 font-bold rounded-xl disabled:text-gray-400 touch-manipulation"
+                                                className="flex-1 bg-gray-200 text-gray-600 font-bold rounded-lg disabled:text-gray-400 touch-manipulation text-sm"
                                                 disabled={!timerActive}
                                             >
-                                                やりなおす
+                                                けす
                                             </button>
                                             <button 
                                                 onClick={() => handleAnswer(userAnswer)} 
-                                                className="flex-1 bg-orange-500 text-white font-bold rounded-xl text-xl shadow-lg active:scale-95 disabled:bg-gray-400 touch-manipulation"
+                                                className="flex-1 bg-orange-500 text-white font-bold rounded-lg text-lg shadow-lg active:scale-95 disabled:bg-gray-400 touch-manipulation"
                                                 disabled={!timerActive || userAnswer.length === 0}
                                             >
                                                 できた！
@@ -1084,31 +1093,31 @@
             };
 
             const renderShop = () => (
-                <div className="p-4 pb-20 bg-yellow-50 min-h-full">
-                    <div className="flex items-center gap-2 mb-6">
+                <div className="p-4 bg-yellow-50 h-full overflow-y-auto pb-20">
+                    <div className="flex items-center gap-2 mb-4">
                         <button onClick={() => setScreen('home')} className="p-2 bg-white rounded-full shadow"><Home size={20}/></button>
-                        <h2 className="text-2xl font-bold text-yellow-800">アイテムやさん</h2>
+                        <h2 className="text-xl font-bold text-yellow-800">アイテムやさん</h2>
                         <div className="ml-auto flex items-center gap-1 bg-yellow-200 px-3 py-1 rounded-full font-bold">
                             💰 {player.coins}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                         {ITEMS.map(item => {
                             const owned = item.type !== 'consumable' && player.items.find(i => i.id === item.id);
                             return (
-                                <div key={item.id} className={`bg-white p-4 rounded-xl shadow-md flex flex-col items-center text-center ${owned ? 'opacity-50 grayscale' : ''}`}>
-                                    <div className="text-4xl mb-2">{item.icon}</div>
-                                    <div className="font-bold text-gray-800">{item.name}</div>
-                                    <div className="text-xs text-gray-500 mb-2">
+                                <div key={item.id} className={`bg-white p-3 rounded-xl shadow-md flex flex-col items-center text-center ${owned ? 'opacity-50 grayscale' : ''}`}>
+                                    <div className="text-3xl mb-1">{item.icon}</div>
+                                    <div className="font-bold text-gray-800 text-sm">{item.name}</div>
+                                    <div className="text-[10px] text-gray-500 mb-2">
                                         {item.type === 'weapon' ? `こうげき +${item.power}` : item.type === 'armor' ? `ぼうぎょ +${item.defense}` : 'HPをぜんかいふく'}
                                     </div>
                                     {owned ? (
-                                        <div className="text-green-600 font-bold text-sm">うりきれ</div>
+                                        <div className="text-green-600 font-bold text-xs">うりきれ</div>
                                     ) : (
                                         <button 
                                             onClick={() => buyItem(item)}
-                                            className={`px-4 py-1 rounded-full text-sm font-bold shadow w-full ${player.coins < item.cost ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-yellow-400 text-yellow-900 hover:bg-yellow-300'}`}
+                                            className={`px-3 py-1 rounded-full text-xs font-bold shadow w-full ${player.coins < item.cost ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-yellow-400 text-yellow-900 hover:bg-yellow-300'}`}
                                             disabled={player.coins < item.cost}
                                         >
                                             {item.cost} コイン
@@ -1128,45 +1137,45 @@
             );
 
             const renderProfile = () => (
-                <div className="p-4 pb-20 bg-green-50 min-h-full">
-                    <div className="flex items-center gap-2 mb-6">
+                <div className="p-4 bg-green-50 h-full overflow-y-auto pb-20">
+                    <div className="flex items-center gap-2 mb-4">
                         <button onClick={() => setScreen('home')} className="p-2 bg-white rounded-full shadow"><Home size={20}/></button>
-                        <h2 className="text-2xl font-bold text-green-800">ゆうしゃの記録</h2>
+                        <h2 className="text-xl font-bold text-green-800">ゆうしゃの記録</h2>
                     </div>
 
-                    <div className="bg-white p-6 rounded-2xl shadow-lg mb-6 text-center">
-                        <div className="text-6xl mb-4">🦸</div>
-                        <div className="text-2xl font-bold text-gray-800">{player.name}</div>
-                        <div className="text-sky-600 font-bold text-lg mb-4">レベル {player.level}</div>
+                    <div className="bg-white p-4 rounded-2xl shadow-lg mb-4 text-center">
+                        <div className="text-5xl mb-2">🦸</div>
+                        <div className="text-xl font-bold text-gray-800">{player.name}</div>
+                        <div className="text-sky-600 font-bold mb-3">レベル {player.level}</div>
                         
-                        <div className="flex justify-center mb-4">
-                            <div className="flex items-center gap-2 bg-red-100 px-4 py-2 rounded-full">
-                                <Heart className="text-red-500" fill="currentColor" />
-                                <span className="font-bold text-xl">{player.hp} / {player.maxHp}</span>
+                        <div className="flex justify-center mb-3">
+                            <div className="flex items-center gap-2 bg-red-100 px-4 py-1 rounded-full">
+                                <Heart className="text-red-500" fill="currentColor" size={18} />
+                                <span className="font-bold text-lg">{player.hp} / {player.maxHp}</span>
                             </div>
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-2 text-center text-sm">
-                            <div className="bg-gray-100 p-3 rounded-xl flex flex-col items-center">
-                                <Sword className="text-gray-500 mb-1" />
+                        <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                            <div className="bg-gray-100 p-2 rounded-xl flex flex-col items-center">
+                                <Sword className="text-gray-500 mb-1" size={16} />
                                 <div className="text-gray-500">こうげき力</div>
                                 <div className="font-bold text-lg">{1 + player.items.filter(i => i.type === 'weapon').reduce((a,c)=>a+c.power,0)}</div>
                             </div>
-                            <div className="bg-gray-100 p-3 rounded-xl flex flex-col items-center">
-                                <Shield className="text-gray-500 mb-1" />
+                            <div className="bg-gray-100 p-2 rounded-xl flex flex-col items-center">
+                                <Shield className="text-gray-500 mb-1" size={16} />
                                 <div className="text-gray-500">ぼうぎょ力</div>
                                 <div className="font-bold text-lg">{player.items.filter(i => i.type === 'armor').reduce((a,c)=>a+c.defense,0)}</div>
                             </div>
                         </div>
                     </div>
 
-                    <h3 className="font-bold text-green-800 mb-3 ml-2 flex items-center gap-2"><ShoppingBag size={20}/> もちもの</h3>
+                    <h3 className="font-bold text-green-800 mb-2 ml-2 flex items-center gap-2"><ShoppingBag size={18}/> もちもの</h3>
                     <div className="grid grid-cols-4 gap-2">
-                        {player.items.filter(i => i.type !== 'consumable').length === 0 && <div className="col-span-4 text-center text-gray-400 py-4 bg-white rounded-xl">そうびを もっていません</div>}
+                        {player.items.filter(i => i.type !== 'consumable').length === 0 && <div className="col-span-4 text-center text-gray-400 py-4 bg-white rounded-xl text-sm">そうびを もっていません</div>}
                         {player.items.filter(i => i.type !== 'consumable').map((item, idx) => (
-                            <div key={idx} className="bg-white p-2 rounded-xl shadow flex flex-col items-center justify-center aspect-square relative">
-                                <span className="text-3xl">{item.icon}</span>
-                                <span className="absolute bottom-1 right-1 text-xs bg-gray-200 px-1 rounded">
+                            <div key={idx} className="bg-white p-1 rounded-xl shadow flex flex-col items-center justify-center aspect-square relative">
+                                <span className="text-2xl">{item.icon}</span>
+                                <span className="absolute bottom-0 right-0 text-[10px] bg-gray-200 px-1 rounded-tl">
                                     {item.type === 'weapon' ? `+${item.power}` : `+${item.defense}`}
                                 </span>
                             </div>
@@ -1175,11 +1184,10 @@
                 </div>
             );
 
+            // アドレスバー対策のラッパー（100dvh）
             return (
-                <div className="w-full max-w-md mx-auto h-screen bg-white overflow-hidden font-sans text-gray-900 select-none flex flex-col relative">
-                    {screen !== 'battle' && renderHeader()}
-                    
-                    <div className="flex-1 overflow-y-auto bg-gray-50">
+                <div className="w-full max-w-md mx-auto h-[100dvh] max-h-[100dvh] bg-white overflow-hidden font-sans text-gray-900 select-none flex flex-col relative shadow-2xl">
+                    <div className="flex-1 overflow-hidden relative">
                         {screen === 'home' && renderHome()}
                         {screen === 'battle' && renderBattle()}
                         {screen === 'shop' && renderShop()}
