@@ -221,7 +221,7 @@ export const BattleScreen = ({
                                         onClick={() => handleInput(char)}
                                         className={`
                                             aspect-square rounded-xl text-xl font-bold shadow-sm border-b-4 active:border-b-0 active:translate-y-1 transition-all
-                                             bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100 flex items-center justify-center
+                                             bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 flex items-center justify-center
                                         `}
                                     >
                                         {char}
@@ -237,7 +237,11 @@ export const BattleScreen = ({
                                     <button
                                         key={num}
                                         onClick={() => handleInput(num.toString())}
-                                        className="aspect-square rounded-lg bg-slate-100 border-2 border-slate-300 font-bold text-xl text-slate-600 active:bg-slate-200 flex items-center justify-center shadow-sm"
+                                        className={`
+                                            aspect-square rounded-xl bg-blue-50 border-blue-200 border-b-4 font-bold text-xl text-blue-600 
+                                            active:border-b-0 active:translate-y-0.5 active:bg-blue-100 
+                                            flex items-center justify-center shadow-sm transition-all
+                                        `}
                                     >
                                         {num}
                                     </button>
