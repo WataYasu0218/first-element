@@ -27,8 +27,22 @@ export const MonsterBook = ({ monsters, defeatedMonsters, onClose }) => {
                                     ${isDefeated ? 'bg-white border-purple-200 shadow-md' : 'bg-gray-200 border-gray-300'}
                                 `}
                             >
-                                <div className="text-4xl mb-2 filter drop-shadow-sm">
-                                    {isDefeated ? (monster.image ? <img src={monster.image} alt={monster.name} className="w-20 h-20 object-contain" /> : monster.icon) : '❓'}
+                                <div className="text-4xl mb-2 filter drop-shadow-sm flex items-center justify-center w-20 h-20">
+                                    {isDefeated ? (
+                                        <>
+                                            {monster.image && (
+                                                <img
+                                                    src={monster.image}
+                                                    alt={monster.name}
+                                                    className="w-full h-full object-contain"
+                                                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
+                                                />
+                                            )}
+                                            <div style={{ display: monster.image ? 'none' : 'block', fontSize: '3rem' }}>
+                                                {monster.icon}
+                                            </div>
+                                        </>
+                                    ) : '❓'}
                                 </div>
                                 <div className={`font-bold text-sm ${isDefeated ? 'text-gray-800' : 'text-gray-400'}`}>
                                     {isDefeated ? monster.name : '？？？？'}
