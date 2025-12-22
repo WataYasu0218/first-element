@@ -30,7 +30,7 @@
             touch-action: manipulation; /* ダブルタップズーム防止 */
             background-color: #f0f9ff;
             font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-            -webkit-user-select: none; /* テキスト選択禁止（アプリっぽくする） */
+            -webkit-user-select: none; /* テキスト選択禁止 */
             user-select: none;
         }
         #root {
@@ -38,14 +38,7 @@
             height: 100%;
         }
 
-        /* カスタムアニメーション定義 */
-        @keyframes slash {
-            0% { left: 120%; top: -20%; opacity: 0; transform: rotate(45deg) scale(0.5); }
-            20% { opacity: 1; transform: rotate(45deg) scale(1); }
-            100% { left: -50%; top: 150%; opacity: 0; transform: rotate(45deg) scale(1); }
-        }
-        .animate-slash { animation: slash 0.6s ease-out forwards; }
-
+        /* アニメーション定義 */
         @keyframes flash-red-alert {
             0%, 100% { box-shadow: inset 0 0 0 0 rgba(255,0,0,0); }
             50% { box-shadow: inset 0 0 50px 20px rgba(255,0,0,0.5); }
@@ -58,16 +51,25 @@
         }
         .animate-flash-red-overlay { animation: flash-red-overlay 1s infinite; }
 
+        /* 敵がダメージを受けた時のシェイク */
+        @keyframes shake-damage {
+            0% { transform: translate(0, 0) rotate(0deg); filter: brightness(1); }
+            10% { transform: translate(-10px, -5px) rotate(-5deg); filter: brightness(2) sepia(1) hue-rotate(-50deg) saturate(5); } /* 赤白く光る */
+            20% { transform: translate(10px, 5px) rotate(5deg); }
+            30% { transform: translate(-10px, 5px) rotate(-5deg); }
+            40% { transform: translate(10px, -5px) rotate(5deg); }
+            50% { transform: translate(0, 0) rotate(0deg); filter: brightness(1); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        .animate-shake-damage { animation: shake-damage 0.4s ease-out; }
+
+        /* プレイヤーがダメージを受けた時のシェイク */
         @keyframes shake-hard {
             0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            10% { transform: translate(-10px, -10px) rotate(-5deg); }
-            20% { transform: translate(10px, 10px) rotate(5deg); }
-            30% { transform: translate(-10px, 10px) rotate(-5deg); }
-            40% { transform: translate(10px, -10px) rotate(5deg); }
-            50% { transform: translate(-5px, -5px) rotate(-2deg); }
-            60% { transform: translate(5px, 5px) rotate(2deg); }
-            70% { transform: translate(-5px, 5px) rotate(-2deg); }
-            80% { transform: translate(5px, -5px) rotate(2deg); }
+            10% { transform: translate(-8px, -8px) rotate(-3deg); }
+            30% { transform: translate(8px, 8px) rotate(3deg); }
+            50% { transform: translate(-6px, 6px) rotate(-2deg); }
+            70% { transform: translate(6px, -6px) rotate(2deg); }
             90% { transform: translate(0, 0) rotate(0deg); }
         }
         .animate-shake-hard { animation: shake-hard 0.5s ease-in-out; }
@@ -176,12 +178,6 @@
             if (shape === 'まる') return <div className="w-16 h-16 bg-red-500 rounded-full mx-auto my-2 border-4 border-red-700 shadow-md"></div>;
             return null;
         };
-
-        const SlashEffect = () => (
-            <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden flex items-center justify-center">
-                <div className="w-[150%] h-[30px] bg-white shadow-[0_0_30px_15px_rgba(255,255,255,0.9)] animate-slash absolute" />
-            </div>
-        );
 
         // --- 問題生成ロジック ---
 
@@ -528,7 +524,6 @@
             const [showLevelUp, setShowLevelUp] = useState(false);
             const [isGameOver, setIsGameOver] = useState(false);
             const [showEncounter, setShowEncounter] = useState(false); 
-            const [showSlash, setShowSlash] = useState(false);
             const [lastQuestionType, setLastQuestionType] = useState(null);
             const [showHitEffect, setShowHitEffect] = useState(false);
 
@@ -709,8 +704,10 @@
 
                 if (ans === question.answer) {
                     setIsCorrect(true);
-                    setShowSlash(true); 
-                    setTimeout(() => setShowSlash(false), 500); 
+                    
+                    // 斬撃エフェクト(ShowSlash)は廃止し、敵を揺らす(ShowHitEffect)
+                    setShowHitEffect(true);
+                    setTimeout(() => setShowHitEffect(false), 400); 
                     
                     playSound('success');
                     
@@ -920,7 +917,10 @@
                     ? 'bg-gradient-to-b from-purple-900 to-gray-800' 
                     : 'bg-gradient-to-b from-sky-200 to-sky-100';
                 
-                const shakeClass = (isCorrect === false && !isGameOver) || (player.hp === 0 && !isGameOver) ? 'animate-shake-hard' : '';
+                // ダメージシェイクのロジックを修正
+                // 敵がダメージ(showHitEffect) -> animate-shake-damage
+                // 自分がダメージ(isCorrect===false) -> animate-shake-hard
+                const shakeClass = showHitEffect ? 'animate-shake-damage' : ((isCorrect === false && !isGameOver) || (player.hp === 0 && !isGameOver) ? 'animate-shake-hard' : '');
 
                 return (
                     <div className={`flex flex-col h-full bg-slate-100 relative overflow-hidden ${timeLeft <= 5 ? 'animate-flash-red' : ''} ${shakeClass}`}>
@@ -966,12 +966,11 @@
                                 <div className={`text-[10px] font-bold ${currentMonster.isBoss ? 'text-gray-300' : 'text-gray-600'}`}>HP: {Math.max(0, monsterHp)}</div>
                             </div>
 
-                            <div className={`relative flex justify-center items-center h-28 w-28 z-0 transition-transform duration-200 ${showHitEffect ? 'animate-shake-hard filter brightness-200' : ''}`}>
+                            <div className={`relative flex justify-center items-center h-28 w-28 z-0 transition-transform duration-200 ${showHitEffect ? 'filter brightness-150' : ''}`}>
                                 <span className={`text-7xl filter drop-shadow-2xl transform transition-all duration-500 ${currentMonster.isBoss ? 'scale-125' : ''}`}>
                                     {currentMonster.icon}
                                 </span>
-                                {/* 斬撃エフェクト */}
-                                {showSlash && <SlashEffect />}
+                                {/* 斬撃エフェクトは削除されました */}
                                 {isCorrect === false && <div className="absolute inset-0 bg-red-500/50 rounded-full animate-ping"></div>}
                             </div>
                         </div>
