@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>冬休み大冒険：ちえの勇者</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "react": "https://esm.sh/react@18.2.0",
+            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+            "lucide-react": "https://esm.sh/lucide-react@0.303.0"
+        }
+    }
+    </script>
+
+    <style>
+        /* 基本設定：スクロール禁止とタッチ操作の最適化 */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* 全体のスクロールを禁止 */
+            touch-action: manipulation; /* ダブルタップズーム防止 */
+            background-color: #f0f9ff;
+            font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            -webkit-user-select: none; /* テキスト選択禁止 */
+            user-select: none;
+        }
+        #root {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* アニメーション定義 */
+        @keyframes flash-red-alert {
+            0%, 100% { box-shadow: inset 0 0 0 0 rgba(255,0,0,0); }
+            50% { box-shadow: inset 0 0 50px 20px rgba(255,0,0,0.5); }
+        }
+        .animate-flash-red { animation: flash-red-alert 1s infinite; }
+
+        @keyframes flash-red-overlay {
+            0%, 100% { background-color: rgba(255, 0, 0, 0); box-shadow: inset 0 0 0 0 rgba(255,0,0,0); }
+            50% { background-color: rgba(255, 0, 0, 0.1); box-shadow: inset 0 0 50px 20px rgba(255,0,0,0.5); }
+        }
+        .animate-flash-red-overlay { animation: flash-red-overlay 1s infinite; }
+
+        /* 敵がダメージを受けた時のシェイク */
+        @keyframes shake-damage {
+            0% { transform: translate(0, 0) rotate(0deg); filter: brightness(1); }
+            10% { transform: translate(-10px, -5px) rotate(-5deg); filter: brightness(2) sepia(1) hue-rotate(-50deg) saturate(5); } /* 赤白く光る */
+            20% { transform: translate(10px, 5px) rotate(5deg); }
+            30% { transform: translate(-10px, 5px) rotate(-5deg); }
+            40% { transform: translate(10px, -5px) rotate(5deg); }
+            50% { transform: translate(0, 0) rotate(0deg); filter: brightness(1); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        .animate-shake-damage { animation: shake-damage 0.4s ease-out; }
+
+        /* プレイヤーがダメージを受けた時のシェイク */
+        @keyframes shake-hard {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            10% { transform: translate(-8px, -8px) rotate(-3deg); }
+            30% { transform: translate(8px, 8px) rotate(3deg); }
+            50% { transform: translate(-6px, 6px) rotate(-2deg); }
+            70% { transform: translate(6px, -6px) rotate(2deg); }
+            90% { transform: translate(0, 0) rotate(0deg); }
+        }
+        .animate-shake-hard { animation: shake-hard 0.5s ease-in-out; }
+        
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .animate-spin-slow { animation: spin 3s linear infinite; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect, useCallback } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { Sword, Shield, Book, Calculator, Star, ShoppingBag, Trophy, Home, Heart, Zap, Play, Clock, RefreshCcw, Skull, Sparkles, AlertTriangle } from 'lucide-react';
+
+        // --- データと定数 ---
+
+        const LEVELS = [0, 100, 250, 450, 700, 1000, 1350, 1750, 2200, 3000];
+        const TIME_LIMIT = 15;
+
+        const ITEMS = [
+            { id: 'p1', name: 'みならいの剣', cost: 50, icon: '🗡️', type: 'weapon', power: 1 },
+            { id: 'p2', name: '勇者の剣', cost: 200, icon: '⚔️', type: 'weapon', power: 2 },
+            { id: 'p3', name: '伝説の剣', cost: 500, icon: '🔱', type: 'weapon', power: 3 },
+            { id: 'a1', name: '木のたて', cost: 50, icon: '🛡️', type: 'armor', defense: 1 },
+            { id: 'a2', name: '鉄のたて', cost: 200, icon: '🛡️', type: 'armor', defense: 2 },
+            { id: 'pot', name: '元気の薬', cost: 20, icon: '🧪', type: 'consumable', effect: 'heal' },
+        ];
+
+        const INITIAL_MONSTERS = [
+            // Lv 1-2
+            { id: 'm1', name: '雪だるまン', hp: 3, attack: 1, exp: 20, coin: 10, icon: '⛄', minLevel: 1, timeLimit: 20, difficulty: 0 },
+            { id: 'm2', name: 'こおりスライム', hp: 5, attack: 2, exp: 35, coin: 15, icon: '💧', minLevel: 1, timeLimit: 18, difficulty: 0 },
+            { id: 'm5', name: 'みかんバード', hp: 6, attack: 2, exp: 40, coin: 20, icon: '🦅', color: 'orange', minLevel: 2, timeLimit: 15, difficulty: 1 }, 
+            
+            // Lv 3-4
+            { id: 'm3', name: '寒がりオバケ', hp: 8, attack: 3, exp: 50, coin: 25, icon: '👻', minLevel: 3, timeLimit: 15, difficulty: 1 },
+            { id: 'm6', name: 'コタツムリ', hp: 10, attack: 3, exp: 60, coin: 30, icon: '🐌', minLevel: 3, timeLimit: 15, difficulty: 1 },
+            { id: 'm9', name: 'イエティ', hp: 12, attack: 3, exp: 70, coin: 35, icon: '🦍', color: 'white', minLevel: 4, timeLimit: 12, difficulty: 2 },
+
+            // Lv 5-6
+            { id: 'm7', name: 'おもちナイト', hp: 15, attack: 4, exp: 80, coin: 40, icon: '🛡️', minLevel: 5, timeLimit: 12, difficulty: 2 },
+            { id: 'm4', name: '冬将軍', hp: 20, attack: 5, exp: 150, coin: 100, icon: '👹', minLevel: 6, isBoss: true, timeLimit: 10, difficulty: 3 },
+            
+            // Lv 7+
+            { id: 'm8', name: '氷のドラゴン', hp: 30, attack: 6, exp: 300, coin: 200, icon: '🐉', minLevel: 7, isBoss: true, timeLimit: 8, difficulty: 4 },
+            
+            // レア
+            { id: 'rare1', name: 'ひかりの妖精', hp: 5, attack: 1, exp: 100, coin: 300, icon: '🧚', minLevel: 1, isRare: true, timeLimit: 10, difficulty: 1 },
+        ];
+
+        // --- ビジュアルコンポーネント ---
+
+        const AnalogClock = ({ hour, minute }) => {
+            const minuteDeg = (minute / 60) * 360;
+            const hourDeg = ((hour % 12) / 12) * 360 + (minute / 60) * 30;
+
+            return (
+                <div className="relative w-20 h-20 bg-white rounded-full border-4 border-gray-700 shadow-md mx-auto my-1 box-content flex-shrink-0">
+                {[...Array(12)].map((_, i) => (
+                    <div key={i} className="absolute w-full h-full left-0 top-0" style={{ transform: `rotate(${i * 30}deg)` }}>
+                    <div className="mx-auto w-0.5 h-1.5 bg-gray-400 mt-0.5"></div>
+                    </div>
+                ))}
+                <div className="absolute w-1 h-2 bg-red-400 left-1/2 top-0 -translate-x-1/2 mt-0.5" />
+                <div className="absolute w-1 h-2 bg-gray-600 left-1/2 bottom-0 -translate-x-1/2 mb-0.5" />
+                <div className="absolute h-1 w-2 bg-gray-600 top-1/2 right-0 -translate-y-1/2 mr-0.5" />
+                <div className="absolute h-1 w-2 bg-gray-600 top-1/2 left-0 -translate-y-1/2 ml-0.5" />
+                <div className="absolute top-1/2 left-1/2 w-3 h-3 bg-black rounded-full -translate-x-1/2 -translate-y-1/2 z-20 border-2 border-white" />
+                <div className="absolute top-1/2 left-1/2 w-1.5 h-6 bg-black rounded-full z-10 origin-bottom" style={{ transform: `translate(-50%, -100%) rotate(${hourDeg}deg)` }} />
+                <div className="absolute top-1/2 left-1/2 w-1 h-8 bg-gray-800 rounded-full z-10 origin-bottom" style={{ transform: `translate(-50%, -100%) rotate(${minuteDeg}deg)` }} />
+                </div>
+            );
+        };
+
+        const MoneyVisual = ({ count100, count10, count1 }) => {
+            return (
+                <div className="flex flex-wrap justify-center gap-1 my-1 max-w-[200px] mx-auto">
+                {[...Array(count100)].map((_, i) => (
+                    <div key={`100-${i}`} className="w-9 h-9 rounded-full bg-gray-200 border-2 border-gray-400 flex items-center justify-center font-bold text-gray-600 text-xs shadow-sm">100</div>
+                ))}
+                {[...Array(count10)].map((_, i) => (
+                    <div key={`10-${i}`} className="w-8 h-8 rounded-full bg-orange-300 border-2 border-orange-500 flex items-center justify-center font-bold text-orange-800 text-xs shadow-sm">10</div>
+                ))}
+                {[...Array(count1)].map((_, i) => (
+                    <div key={`1-${i}`} className="w-6 h-6 rounded-full bg-gray-100 border-2 border-gray-300 flex items-center justify-center font-bold text-gray-500 text-[10px] shadow-sm">1</div>
+                ))}
+                </div>
+            );
+        };
+
+        const BlockVisual = ({ count }) => {
+            return (
+                <div className="flex flex-wrap justify-center gap-1 my-2 max-w-[150px] mx-auto">
+                {[...Array(count)].map((_, i) => (
+                    <div key={i} className="w-7 h-7 bg-blue-400 border-b-4 border-r-4 border-blue-600 rounded-sm"></div>
+                ))}
+                </div>
+            );
+        };
+
+        const ShapeVisual = ({ shape }) => {
+            if (shape === 'さんかく') return <div className="w-0 h-0 border-l-[35px] border-l-transparent border-r-[35px] border-r-transparent border-b-[60px] border-b-green-500 mx-auto my-2 drop-shadow-md"></div>;
+            if (shape === 'しかく') return <div className="w-16 h-16 bg-blue-500 mx-auto my-2 border-4 border-blue-700 shadow-md"></div>;
+            if (shape === 'まる') return <div className="w-16 h-16 bg-red-500 rounded-full mx-auto my-2 border-4 border-red-700 shadow-md"></div>;
+            return null;
+        };
+
+        // --- 問題生成ロジック ---
+
+        const generateMathProblem = (playerLevel, difficulty, lastType) => {
+            const effectiveLevel = playerLevel + difficulty;
+            
+            let typeIndex = Math.floor(Math.random() * 6);
+            if (lastType && lastType === typeIndex) {
+                typeIndex = (typeIndex + 1) % 6;
+            }
+            const currentType = typeIndex;
+
+            if (currentType === 0) { // 時計
+                const hour = Math.floor(Math.random() * 12) + 1;
+                const minuteOptions = effectiveLevel >= 3 ? [0, 15, 30, 45] : [0, 30];
+                const minute = minuteOptions[Math.floor(Math.random() * minuteOptions.length)];
+                
+                let timeText = '';
+                if (minute === 0) timeText = `${hour}じ`;
+                else if (minute === 30) timeText = `${hour}じはん`;
+                else timeText = `${hour}じ${minute}ふん`;
+
+                const correct = timeText;
+                let options = [correct];
+                
+                while (options.length < 3) {
+                    const r = Math.random();
+                    let fakeText = '';
+                    if (r < 0.3) {
+                        const fh = (hour % 12) + 1;
+                        if (minute === 0) fakeText = `${fh}じ`;
+                        else if (minute === 30) fakeText = `${fh}じはん`;
+                        else fakeText = `${fh}じ${minute}ふん`;
+                    } else if (r < 0.6) {
+                        const fm = minute === 0 ? 30 : 0;
+                        if (fm === 0) fakeText = `${hour}じ`;
+                        else fakeText = `${hour}じはん`;
+                    } else {
+                        const fh = Math.floor(Math.random() * 12) + 1;
+                        fakeText = `${fh}じ`;
+                    }
+
+                    if (!options.includes(fakeText) && fakeText !== '') options.push(fakeText);
+                    if (options.length < 3 && options.length === 1) { 
+                        options.push('1じ');
+                        options.push('12じ');
+                    }
+                }
+                options = options.sort(() => Math.random() - 0.5);
+
+                return {
+                    problemType: 0,
+                    type: 'select',
+                    question: 'とけいを みて こたえよう',
+                    visualType: 'clock',
+                    visualData: { hour, minute },
+                    options: options,
+                    answer: correct,
+                    hint: 'みじかいはりと ながいはりを よくみてね'
+                };
+            } else if (currentType === 1) { // お金
+                const use100 = effectiveLevel >= 4; 
+                const count100 = use100 ? (Math.random() > 0.7 ? 1 : 0) : 0;
+                const count10 = Math.floor(Math.random() * 5) + 1;
+                const count1 = Math.floor(Math.random() * 6);
+                const total = count100 * 100 + count10 * 10 + count1;
+                return {
+                    problemType: 1,
+                    type: 'calc',
+                    question: 'あわせて いくら？',
+                    visualType: 'money',
+                    visualData: { count100, count10, count1 },
+                    answer: total.toString(),
+                    hint: 'おおきい お金から かぞえよう'
+                };
+            } else if (currentType === 2) { // ブロック
+                const maxBlocks = effectiveLevel >= 3 ? 12 : 6;
+                const count = Math.floor(Math.random() * (maxBlocks - 3)) + 3;
+                return { problemType: 2, type: 'calc', question: 'しかくは いくつ ある？', visualType: 'block', visualData: { count }, answer: count.toString(), hint: 'ひとつずつ かぞえてね' };
+            } else if (currentType === 3) { // 順番
+                const animals = ['🐶', '🐱', '🐭', '🐹', '🐰'];
+                const shuffled = [...animals].sort(() => Math.random() - 0.5);
+                const targetIndex = Math.floor(Math.random() * 5);
+                const isRight = Math.random() > 0.5;
+                const targetAnimal = isRight ? shuffled[4 - targetIndex] : shuffled[targetIndex];
+                const otherAnimals = animals.filter(a => a !== targetAnimal);
+                const wrongOptions = otherAnimals.sort(() => Math.random() - 0.5).slice(0, 2);
+                const options = [...wrongOptions, targetAnimal].sort(() => Math.random() - 0.5);
+                return { problemType: 3, type: 'select', question: `【 ${shuffled.join(' ')} 】\n${isRight ? 'みぎ' : 'ひだり'}から ${targetIndex + 1}ばんめ は？`, options: options, answer: targetAnimal, hint: isRight ? 'みぎ（→）の ほうから かぞえてね' : 'ひだり（←）の ほうから かぞえてね' };
+            } else if (currentType === 4) { // 形
+                const shapes = ['さんかく', 'しかく', 'まる'];
+                const target = shapes[Math.floor(Math.random() * shapes.length)];
+                const otherShapes = shapes.filter(s => s !== target);
+                const options = [...otherShapes, target].sort(() => Math.random() - 0.5);
+                return { problemType: 4, type: 'select', question: 'この かたちの なまえは？', visualType: 'shape', visualData: { shape: target }, options: options, answer: target, hint: 'かたちを よくみてね' };
+            } else { // 計算
+                const subType = Math.random();
+                if (subType < 0.3) {
+                    const maxNum = effectiveLevel >= 4 ? 9 : 5;
+                    const a = Math.floor(Math.random() * maxNum) + 1;
+                    const b = Math.floor(Math.random() * maxNum) + 1;
+                    const c = Math.floor(Math.random() * maxNum) + 1;
+                    
+                    if (effectiveLevel >= 3 && Math.random() > 0.7) {
+                        const start = Math.floor(Math.random() * 10) + 10;
+                        const safeStart = Math.max(start, a + b);
+                        return { problemType: 5, type: 'calc', question: `${safeStart} - ${a} - ${b} = ?`, answer: (safeStart - a - b).toString(), hint: 'ひきざんだよ' };
+                    }
+                    return { problemType: 5, type: 'calc', question: `${a} + ${b} + ${c} = ?`, answer: (a + b + c).toString(), hint: 'じゅんばんに たしていこう' };
+                } else if (subType < 0.5) {
+                    const a = Math.floor(Math.random() * 9) + 1;
+                    const b = Math.floor(Math.random() * 9) + 1;
+                    return { problemType: 5, type: 'calc', question: `${a} + [ ? ] = ${a+b}`, answer: b.toString(), hint: 'なにをたすと こたえになるかな？' };
+                } else if (subType < 0.8) {
+                    const isAdd = Math.random() > 0.5;
+                    if (isAdd) {
+                        let a, b;
+                        if (effectiveLevel >= 3 && Math.random() > 0.5) {
+                            a = Math.floor(Math.random() * 8) + 2; 
+                            b = Math.floor(Math.random() * (9 - (10 - a)) + (10 - a)); 
+                        } else if (effectiveLevel >= 5 && Math.random() > 0.6) {
+                            a = Math.floor(Math.random() * 20) + 10;
+                            b = Math.floor(Math.random() * 9) + 1;
+                        } else {
+                            a = Math.floor(Math.random() * 10) + 1;
+                            b = Math.floor(Math.random() * 10) + 1;
+                        }
+                        return { problemType: 5, type: 'calc', question: `${a} + ${b} = ?`, answer: (a+b).toString() };
+                    } else {
+                        const a = Math.floor(Math.random() * 15) + 5;
+                        const b = Math.floor(Math.random() * a); 
+                        return { problemType: 5, type: 'calc', question: `${a} - ${b} = ?`, answer: (a-b).toString() };
+                    }
+                } else {
+                    const scenarios = [
+                        { t: 'みかんが {a}こ あります。{b}こ もらいました。あわせて いくつ？', op: '+' },
+                        { t: 'こうえんに {a}にん いました。{b}にん かえりました。のこりは 何にん？', op: '-' },
+                        { t: 'アメを {a}こ もっています。{b}こ たべました。のこりは いくつ？', op: '-' },
+                        { t: 'バスに {a}にん のっています。{b}にん のってきました。ぜんぶで 何にん？', op: '+' },
+                        { t: 'えんぴつを {a}ほん かいました。{b}ほん つかいました。のこりは？', op: '-' }
+                    ];
+                    const s = scenarios[Math.floor(Math.random() * scenarios.length)];
+                    const maxNum = effectiveLevel >= 4 ? 15 : 8;
+                    const a = Math.floor(Math.random() * maxNum) + 2;
+                    const b = Math.floor(Math.random() * 5) + 1;
+                    let ans, finalA, finalB;
+                    if (s.op === '+') {
+                        finalA = a; finalB = b; ans = a + b;
+                    } else {
+                        finalA = Math.max(a, b);
+                        finalB = Math.min(a, b);
+                        if(finalA === finalB) finalA++;
+                        ans = finalA - finalB;
+                    }
+                    return { problemType: 5, type: 'calc', question: s.t.replace('{a}', finalA).replace('{b}', finalB), answer: ans.toString(), hint: 'しきを かんがえてみよう' };
+                }
+            }
+        };
+
+        const STATIC_JAPANESE_QUESTIONS = [
+            { question: '「山」の 読みかたは？', answer: 'やま', type: 'select', options: ['かわ', 'やま', 'た'] },
+            { question: '「川」の 読みかたは？', answer: 'かわ', type: 'select', options: ['やま', 'うみ', 'かわ'] },
+            { question: '「雨」の 読みかたは？', answer: 'あめ', type: 'select', options: ['ゆき', 'あめ', 'くも'] },
+            { question: '「一」の 読みかたは？', answer: 'いち', type: 'select', options: ['いち', 'に', 'さん'] },
+            { question: '「十」の 読みかたは？', answer: 'じゅう', type: 'select', options: ['ご', 'じゅう', 'ひゃく'] },
+            { question: '「森」の 読みかたは？', answer: 'もり', type: 'select', options: ['もり', 'はやし', 'き'] },
+            { question: '「夕」の 読みかたは？', answer: 'ゆう', type: 'select', options: ['ゆう', 'た', 'な'] },
+            { question: '「空」の 読みかたは？', answer: 'そら', type: 'select', options: ['うみ', 'そら', 'くも'] },
+            { question: '「月」の 読みかたは？', answer: 'つき', type: 'select', options: ['つき', 'ひ', 'き'] },
+            { question: '「火」の 読みかたは？', answer: 'ひ', type: 'select', options: ['ひ', 'みず', 'き'] },
+            { question: '「水」の 読みかたは？', answer: 'みず', type: 'select', options: ['ひ', 'みず', 'き'] },
+            { question: '「木」の 読みかたは？', answer: 'き', type: 'select', options: ['ひ', 'みず', 'き'] },
+            { question: '「金」の 読みかたは？', answer: 'かね', type: 'select', options: ['かね', 'つち', 'ひ'] },
+            { question: '「土」の 読みかたは？', answer: 'つち', type: 'select', options: ['かね', 'つち', 'ひ'] },
+            { question: '「日」の 読みかたは？', answer: 'ひ', type: 'select', options: ['つき', 'ひ', 'き'] },
+            { question: '「青」の 読みかたは？', answer: 'あお', type: 'select', options: ['あか', 'しろ', 'あお'] },
+            { question: '「赤」の 読みかたは？', answer: 'あか', type: 'select', options: ['あか', 'しろ', 'あお'] },
+            { question: '「白」の 読みかたは？', answer: 'しろ', type: 'select', options: ['あか', 'しろ', 'あお'] },
+            { question: '「力」の 読みかたは？', answer: 'ちから', type: 'select', options: ['ちから', 'かたな', 'ゆみ'] },
+            { question: '「車」の 読みかたは？', answer: 'くるま', type: 'select', options: ['くるま', 'でんしゃ', 'ふね'] },
+            { question: '「虫」の 読みかたは？', answer: 'むし', type: 'select', options: ['むし', 'かい', 'さかな'] },
+            { question: '「五」の 読みかたは？', answer: 'ご', type: 'select', options: ['ご', 'ろく', 'よん'] },
+            { question: '「六」の 読みかたは？', answer: 'ろく', type: 'select', options: ['ご', 'ろく', 'なな'] },
+            { question: '「七」の 読みかたは？', answer: 'なな', type: 'select', options: ['ろく', 'なな', 'はち'] },
+            { question: '「八」の 読みかたは？', answer: 'はち', type: 'select', options: ['なな', 'はち', 'きゅう'] },
+            { question: '「九」の 読みかたは？', answer: 'きゅう', type: 'select', options: ['はち', 'きゅう', 'じゅう'] },
+            { question: '「百」の 読みかたは？', answer: 'ひゃく', type: 'select', options: ['ひゃく', 'せん', 'まん'] },
+            { question: '「千」の 読みかたは？', answer: 'せん', type: 'select', options: ['ひゃく', 'せん', 'まん'] },
+            { question: '「円」の 読みかたは？', answer: 'えん', type: 'select', options: ['えん', 'だま', 'まる'] },
+            { question: '「上」の 読みかたは？', answer: 'うえ', type: 'select', options: ['うえ', 'した', 'なか'] },
+            { question: '「下」の 読みかたは？', answer: 'した', type: 'select', options: ['うえ', 'した', 'なか'] },
+            { question: '「中」の 読みかたは？', answer: 'なか', type: 'select', options: ['うえ', 'した', 'なか'] },
+            { question: '「貝」の 読みかたは？', answer: 'かい', type: 'select', options: ['かい', 'さかな', 'いし'] },
+            { question: '「草」の 読みかたは？', answer: 'くさ', type: 'select', options: ['くさ', 'き', 'はな'] },
+            { question: '「花」の 読みかたは？', answer: 'はな', type: 'select', options: ['はな', 'くさ', 'き'] },
+            { question: '「林」の 読みかたは？', answer: 'はやし', type: 'select', options: ['はやし', 'もり', 'やま'] },
+            { question: '「本」の 読みかたは？', answer: 'ほん', type: 'select', options: ['ほん', 'き', 'え'] },
+            { question: '「村」の 読みかたは？', answer: 'むら', type: 'select', options: ['むら', 'まち', 'やま'] },
+            { question: '「町」の 読みかたは？', answer: 'まち', type: 'select', options: ['まち', 'むら', 'かわ'] },
+            { question: '「男」の 読みかたは？', answer: 'おとこ', type: 'select', options: ['おとこ', 'おんな', 'こども'] },
+            { question: '「女」の 読みかたは？', answer: 'おんな', type: 'select', options: ['おんな', 'おとこ', 'おとな'] },
+            { question: '「王」の 読みかたは？', answer: 'おう', type: 'select', options: ['おう', 'たま', 'ぬし'] },
+            { question: '「玉」の 読みかたは？', answer: 'たま', type: 'select', options: ['たま', 'おう', 'いし'] },
+            { question: '「糸」の 読みかたは？', answer: 'いと', type: 'select', options: ['いと', 'ひも', 'なわ'] },
+            { question: '「字」の 読みかたは？', answer: 'じ', type: 'select', options: ['じ', 'え', 'ぶん'] },
+            { question: '「音」の 読みかたは？', answer: 'おと', type: 'select', options: ['おと', 'こえ', 'うた'] },
+            { question: '「耳」の 読みかたは？', answer: 'みみ', type: 'select', options: ['みみ', 'め', 'くち'] },
+            { question: '「竹」の 読みかたは？', answer: 'たけ', type: 'select', options: ['たけ', 'き', 'くさ'] },
+            { question: '「早い」の 読みかたは？', answer: 'はやい', type: 'select', options: ['はやい', 'おそい', 'ふるい'] },
+            { question: '「気」の 読みかたは？', answer: 'き', type: 'select', options: ['き', 'け', 'く'] },
+            { question: '「見る」の 読みかたは？', answer: 'みる', type: 'select', options: ['みる', 'きく', 'いう'] },
+            { question: '「聞く」の 読みかたは？', answer: 'きく', type: 'select', options: ['きく', 'みる', 'はなす'] },
+            { question: '「言う」の 読みかたは？', answer: 'いう', type: 'select', options: ['いう', 'きく', 'よむ'] },
+            { question: '「立つ」の 読みかたは？', answer: 'たつ', type: 'select', options: ['たつ', 'すわる', 'ねる'] },
+            { question: '「休む」の 読みかたは？', answer: 'やすむ', type: 'select', options: ['やすむ', 'はしる', 'あそぶ'] },
+            { question: 'わたし＿がっこうへいく。', answer: 'は', type: 'select', options: ['は', 'を', 'へ'] },
+            { question: 'ごはん＿たべる。', answer: 'を', type: 'select', options: ['が', 'を', 'に'] },
+            { question: 'こうえん＿あそぶ。', answer: 'で', type: 'select', options: ['で', 'に', 'を'] },
+            { question: 'おとうさん＿あそぶ。', answer: 'と', type: 'select', options: ['を', 'と', 'は'] },
+            { question: 'おうち＿かえる。', answer: 'へ', type: 'select', options: ['へ', 'を', 'は'] },
+            { question: 'とり＿なく。', answer: 'が', type: 'select', options: ['が', 'を', 'に'] },
+            { question: 'ただしい かんじは？\n「くまが ＿ に いる」', answer: '森', type: 'select', options: ['森', '木'] },
+            { question: 'ただしい かんじは？\n「１＿せい」', answer: '年', type: 'select', options: ['年', '手'] },
+            { question: 'ただしい かんじは？\n「えんぴつを ＿ に もつ」', answer: '手', type: 'select', options: ['手', '年'] },
+            { question: 'ただしい かんじは？\n「＿が さく」', answer: '花', type: 'select', options: ['花', '化'] },
+            { question: '「いぬ」の かんじは？', answer: '犬', type: 'select', options: ['犬', '大'] },
+            { question: '「おおきい」の かんじは？', answer: '大', type: 'select', options: ['犬', '大'] },
+            { question: '「みぎ」の かんじは？', answer: '右', type: 'select', options: ['右', '石'] },
+            { question: '「いし」の かんじは？', answer: '石', type: 'select', options: ['右', '石'] },
+            { question: '「め」の かんじは？', answer: '目', type: 'select', options: ['目', '日'] },
+            { question: '「ひと」の かんじは？', answer: '人', type: 'select', options: ['人', '入'] },
+            { question: '「はいる」の かんじは？', answer: '入', type: 'select', options: ['人', '入'] },
+            { question: 'えんぴつが １＿ あります。', answer: 'ぽん', type: 'select', options: ['まい', 'さつ', 'ぽん'] },
+            { question: 'とりが １＿ います。', answer: 'わ', type: 'select', options: ['ひき', 'わ', 'こ'] },
+            { question: 'かみ（紙）が １＿ あります。', answer: 'まい', type: 'select', options: ['まい', 'ほん', 'こ'] },
+            { question: 'くるまが １＿ あります。', answer: 'だい', type: 'select', options: ['だい', 'まい', 'こ'] },
+            { question: '「あつい」の はんたいは？', answer: 'さむい', type: 'select', options: ['つめたい', 'さむい', 'ぬるい'] },
+            { question: '「おおきい」の はんたいは？', answer: 'ちいさい', type: 'select', options: ['ちいさい', 'みじかい', 'すくない'] },
+            { question: '「たかい」の はんたいは？', answer: 'ひくい', type: 'select', options: ['ひくい', 'やすい', 'みじかい'] },
+            { question: '「ながい」の はんたいは？', answer: 'みじかい', type: 'select', options: ['ひくい', 'ちいさい', 'みじかい'] },
+            { question: 'あさ おきたら なんていう？', answer: 'おはよう', type: 'select', options: ['おはよう', 'こんにちは', 'おやすみ'] },
+            { question: 'ねる ときは なんていう？', answer: 'おやすみ', type: 'select', options: ['おはよう', 'こんにちは', 'おやすみ'] },
+            { question: 'なかまはずれは どれ？', answer: 'キャベツ', type: 'select', options: ['りんご', 'みかん', 'キャベツ'], hint: 'やさい は どれ？' },
+            { question: 'なかまはずれは どれ？', answer: 'ねこ', type: 'select', options: ['カラス', 'スズメ', 'ねこ'], hint: 'とべない のは どれ？' },
+            { question: '「お」か「を」どっち？\nやま＿ こえる', answer: 'を', type: 'select', options: ['お', 'を'] },
+            { question: '「は」か「わ」どっち？\nきょう＿ よい天気', answer: 'は', type: 'select', options: ['は', 'わ'] },
+            { question: '「へ」か「え」どっち？\nうみ＿ いく', answer: 'へ', type: 'select', options: ['へ', 'え'] },
+        ];
+
+        const KATAKANA_TO_HIRAGANA = [
+            { word: 'バナナ', answer: 'ばなな', chars: ['ば','な','な','ま'] },
+            { word: 'ピアノ', answer: 'ぴあの', chars: ['ぴ','あ','の','ん'] },
+            { word: 'テレビ', answer: 'てれび', chars: ['て','れ','び','る'] },
+            { word: 'バス', answer: 'ばす', chars: ['ば','す','ぷ','ず'] },
+            { word: 'アイス', answer: 'あいす', chars: ['あ','い','す','ん'] },
+            { word: 'トマト', answer: 'とまと', chars: ['と','ま','と','ど'] },
+            { word: 'メロン', answer: 'めろん', chars: ['め','ろ','ん','る'] },
+            { word: 'パン', answer: 'ぱん', chars: ['ぱ','ん','ば','ま'] },
+            { word: 'ボール', answer: 'ぼーる', chars: ['ぼ','ー','る','ろ'] },
+            { word: 'ケーキ', answer: 'けーき', chars: ['け','ー','き','ぎ'] },
+            { word: 'ジュース', answer: 'じゅーす', chars: ['じ','ゅ','ー','す'] },
+            { word: 'チョコ', answer: 'ちょこ', chars: ['ち','ょ','こ','ご'] },
+            { word: 'ニュース', answer: 'にゅーす', chars: ['に','ゅ','ー','す'] },
+        ];
+        const HIRAGANA_TO_KATAKANA = [
+            { word: 'すいか', answer: 'スイカ', chars: ['ス','イ','カ','キ'] },
+            { word: 'りんご', answer: 'リンゴ', chars: ['リ','ン','ゴ','ミ'] },
+            { word: 'めがね', answer: 'メガネ', chars: ['メ','ガ','ネ','ヌ'] },
+            { word: 'つくえ', answer: 'ツクエ', chars: ['ツ','ク','エ','オ'] },
+            { word: 'さかな', answer: 'サカナ', chars: ['サ','カ','ナ','タ'] },
+            { word: 'くるま', answer: 'クルマ', chars: ['ク','ル','マ','ム'] },
+            { word: 'らっぱ', answer: 'ラッパ', chars: ['ラ','ッ','パ','バ'] },
+            { word: 'よっと', answer: 'ヨット', chars: ['ヨ','ッ','ト','ド'] },
+            { word: 'のーと', answer: 'ノート', chars: ['ノ','ー','ト','ド'] },
+            { word: 'きっぷ', answer: 'キップ', chars: ['キ','ッ','プ','ブ'] },
+            { word: 'せっけん', answer: 'セッケン', chars: ['セ','ッ','ケ','ン'] },
+        ];
+
+        const generateJapaneseQuestion = (lastType) => {
+            const type = Math.random();
+            let currentType = type < 0.3 ? 0 : 1;
+            
+            if (lastType !== null && lastType === currentType) {
+                currentType = 1 - currentType;
+            }
+
+            if (currentType === 0) {
+                const isKatakanaQuestion = Math.random() > 0.5;
+                if (isKatakanaQuestion) {
+                    const item = KATAKANA_TO_HIRAGANA[Math.floor(Math.random() * KATAKANA_TO_HIRAGANA.length)];
+                    const shuffled = [...item.chars].sort(() => Math.random() - 0.5);
+                    return {
+                        problemType: 10,
+                        type: 'write',
+                        question: `カタカナの「${item.word}」を\nひらがなで かこう`,
+                        answer: item.answer,
+                        chars: shuffled
+                    };
+                } else {
+                    const item = HIRAGANA_TO_KATAKANA[Math.floor(Math.random() * HIRAGANA_TO_KATAKANA.length)];
+                    const shuffled = [...item.chars].sort(() => Math.random() - 0.5);
+                    return {
+                        problemType: 10,
+                        type: 'write',
+                        question: `ひらがなの「${item.word}」を\nカタカナで かこう`,
+                        answer: item.answer,
+                        chars: shuffled
+                    };
+                }
+            }
+            else {
+                return {
+                    problemType: 11,
+                    ...STATIC_JAPANESE_QUESTIONS[Math.floor(Math.random() * STATIC_JAPANESE_QUESTIONS.length)]
+                };
+            }
+        };
+
+        const WinterAdventure = () => {
+            const [screen, setScreen] = useState('home'); 
+            const [subject, setSubject] = useState(null); 
+            const [monsters, setMonsters] = useState(INITIAL_MONSTERS);
+            const [imagesLoaded, setImagesLoaded] = useState(false);
+
+            const [player, setPlayer] = useState({
+                name: 'ゆうしゃ',
+                level: 1,
+                exp: 0,
+                coins: 0,
+                items: [],
+                maxHp: 5,
+                hp: 5
+            });
+
+            const [currentMonster, setCurrentMonster] = useState(null);
+            const [monsterHp, setMonsterHp] = useState(0);
+            const [question, setQuestion] = useState(null);
+            const [userAnswer, setUserAnswer] = useState('');
+            const [message, setMessage] = useState(''); 
+            const [isCorrect, setIsCorrect] = useState(null); 
+            const [streak, setStreak] = useState(0);
+            const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
+            const [timerActive, setTimerActive] = useState(false);
+            const [showLevelUp, setShowLevelUp] = useState(false);
+            const [isGameOver, setIsGameOver] = useState(false);
+            const [showEncounter, setShowEncounter] = useState(false); 
+            const [lastQuestionType, setLastQuestionType] = useState(null);
+            const [showHitEffect, setShowHitEffect] = useState(false);
+
+            const playSound = (type) => { console.log(`Playing sound: ${type}`); };
+
+            useEffect(() => {
+                setImagesLoaded(true);
+            }, []);
+
+            useEffect(() => {
+                let timer = null;
+                if (timerActive && timeLeft > 0 && screen === 'battle' && isCorrect === null && !isGameOver && !showEncounter) {
+                    timer = setInterval(() => {
+                        setTimeLeft(prev => prev - 1);
+                    }, 1000);
+                } else if (timeLeft === 0 && timerActive) {
+                    handleTimeUp();
+                }
+                return () => clearInterval(timer);
+            }, [timerActive, timeLeft, screen, isCorrect, isGameOver, showEncounter]);
+
+            useEffect(() => {
+                const nextLevelExp = LEVELS[player.level];
+                if (player.exp >= nextLevelExp) {
+                    setPlayer(prev => ({
+                        ...prev,
+                        level: prev.level + 1,
+                        maxHp: prev.maxHp + 2, 
+                        hp: prev.maxHp + 2
+                    }));
+                    setShowLevelUp(true);
+                    setTimeout(() => setShowLevelUp(false), 3000);
+                }
+            }, [player.exp, player.level]);
+
+            const takeDamage = useCallback(() => {
+                if (!currentMonster) return false;
+                const defense = player.items.filter(i => i.type === 'armor').reduce((a,c)=>a+c.defense,0);
+                const damage = Math.max(1, currentMonster.attack - defense);
+                
+                setPlayer(prev => {
+                    const newHp = Math.max(0, prev.hp - damage);
+                    if (newHp === 0) {
+                        setTimerActive(false); 
+                        setTimeout(() => {
+                            setIsGameOver(true);
+                            playSound('defeat');
+                        }, 800); 
+                    }
+                    return { ...prev, hp: newHp };
+                });
+
+                if (player.hp > 0) {
+                    playSound('damage');
+                }
+                return player.hp - damage <= 0;
+            }, [currentMonster, player.items, player.hp]);
+
+            const handleTimeUp = () => {
+                setTimerActive(false);
+                setIsCorrect(false);
+                playSound('error');
+                setStreak(0);
+                
+                const willDie = takeDamage();
+                if (!willDie && player.hp > 0) {
+                    setTimeout(() => {
+                        if(!isGameOver) nextQuestion(subject); 
+                    }, 2000);
+                }
+            };
+
+            const handleRestart = () => {
+                setIsGameOver(false);
+                setScreen('home');
+                setPlayer(prev => ({...prev, hp: prev.maxHp}));
+                setMessage('');
+            };
+
+            const getNextMonsterData = (currentLevel, currentId) => {
+                const isRare = Math.random() < 0.05;
+                
+                let candidates = [];
+                if (isRare) {
+                    candidates = monsters.filter(m => m.isRare && currentLevel >= (m.minLevel || 1));
+                }
+                
+                if (candidates.length === 0) {
+                    candidates = monsters.filter(m => !m.isRare && currentLevel >= (m.minLevel || 1));
+                }
+
+                if (candidates.length === 0) candidates = monsters;
+
+                if (currentId && candidates.length > 1) {
+                    candidates = candidates.filter(m => m.id !== currentId);
+                }
+                if (candidates.length === 0) candidates = monsters;
+
+                return candidates[Math.floor(Math.random() * candidates.length)];
+            };
+
+            const startBattle = (subj) => {
+                setSubject(subj);
+                setScreen('battle');
+                
+                const m = getNextMonsterData(player.level, null);
+                
+                setCurrentMonster(m);
+                setMonsterHp(m.hp);
+                
+                if (m.isRare || m.isBoss) {
+                    setShowEncounter(true);
+                    setTimerActive(false);
+                    setTimeout(() => {
+                        setShowEncounter(false);
+                        setTimerActive(true);
+                        setTimeLeft(m.timeLimit || TIME_LIMIT);
+                    }, 2000);
+                } else {
+                    setTimerActive(true);
+                    setTimeLeft(m.timeLimit || TIME_LIMIT);
+                }
+                
+                let q;
+                if (subj === 'math') {
+                    q = generateMathProblem(player.level, m.difficulty || 0, lastQuestionType);
+                } else {
+                    q = generateJapaneseQuestion(lastQuestionType);
+                }
+                setLastQuestionType(q.problemType);
+                setQuestion(q);
+                setUserAnswer('');
+                setIsCorrect(null);
+                setMessage(''); 
+            };
+
+            const nextMonster = (overrideSubject = null) => {
+                const m = getNextMonsterData(player.level, currentMonster?.id);
+                
+                setCurrentMonster(m);
+                setMonsterHp(m.hp);
+                
+                if (m.isRare || m.isBoss) {
+                    setShowEncounter(true);
+                    setTimerActive(false);
+                    setTimeout(() => {
+                        setShowEncounter(false);
+                        setTimerActive(true);
+                        setTimeLeft(m.timeLimit || TIME_LIMIT);
+                    }, 2000);
+                } else {
+                    setTimerActive(true);
+                    setTimeLeft(m.timeLimit || TIME_LIMIT);
+                }
+
+                nextQuestion(overrideSubject || subject); 
+                setMessage('');
+            };
+            
+            const nextQuestion = (currentSubject) => {
+                let q;
+                if (currentSubject === 'math') {
+                    q = generateMathProblem(player.level, currentMonster?.difficulty || 0, lastQuestionType);
+                } else {
+                    q = generateJapaneseQuestion(lastQuestionType);
+                }
+                setLastQuestionType(q.problemType);
+                setQuestion(q);
+                setUserAnswer('');
+                setIsCorrect(null);
+                setTimeLeft(currentMonster?.timeLimit || TIME_LIMIT); 
+                setTimerActive(true); 
+            };
+
+            const handleAnswer = (ans) => {
+                if (isCorrect !== null) return; 
+                setTimerActive(false); 
+
+                if (ans === question.answer) {
+                    setIsCorrect(true);
+                    
+                    // 斬撃エフェクト(ShowSlash)は廃止し、敵を揺らす(ShowHitEffect)
+                    setShowHitEffect(true);
+                    setTimeout(() => setShowHitEffect(false), 400); 
+                    
+                    playSound('success');
+                    
+                    const damage = 1 + (player.items.filter(i => i.type === 'weapon').reduce((acc, i) => acc + i.power, 0));
+                    const newMonsterHp = Math.max(0, monsterHp - damage); 
+                    setMonsterHp(newMonsterHp);
+                    setStreak(s => s + 1);
+                    
+                    if (newMonsterHp <= 0) {
+                        setTimeout(() => {
+                            const bonusCoin = Math.floor(streak / 3) * 5;
+                            setPlayer(prev => ({
+                                ...prev,
+                                exp: prev.exp + currentMonster.exp,
+                                coins: prev.coins + currentMonster.coin + bonusCoin
+                            }));
+                            setTimeout(() => {
+                                nextMonster();
+                            }, 1000);
+                        }, 500);
+                    } else {
+                        setTimeout(() => {
+                            nextQuestion(subject);
+                        }, 1000);
+                    }
+
+                } else {
+                    setIsCorrect(false);
+                    playSound('error');
+                    setStreak(0);
+                    
+                    const willDie = takeDamage();
+                    if (!willDie && player.hp > 0) {
+                        setTimeout(() => {
+                            setIsCorrect(null);
+                            setUserAnswer('');
+                            setMessage('');
+                            setTimeLeft(currentMonster?.timeLimit || TIME_LIMIT);
+                            setTimerActive(true);
+                        }, 1500);
+                    }
+                }
+            };
+
+            const buyItem = (item) => {
+                if (player.coins < item.cost) {
+                    setMessage('コインがたりないよ');
+                    setTimeout(() => setMessage(''), 2000);
+                    return;
+                }
+                
+                if (item.type === 'consumable' && item.effect === 'heal') {
+                    if (player.hp >= player.maxHp) {
+                        setMessage('HPはまんたんだよ');
+                        setTimeout(() => setMessage(''), 2000);
+                        return;
+                    }
+                    setPlayer(prev => ({
+                        ...prev,
+                        coins: prev.coins - item.cost,
+                        hp: prev.maxHp 
+                    }));
+                    setMessage('元気の薬をつかった！');
+                    setTimeout(() => setMessage(''), 2000);
+                } else if (!player.items.find(i => i.id === item.id)) {
+                    setPlayer(prev => ({
+                        ...prev,
+                        coins: prev.coins - item.cost,
+                        items: [...prev.items, item]
+                    }));
+                    setMessage('アイテムをかった！');
+                    setTimeout(() => setMessage(''), 2000);
+                }
+            };
+
+            const renderVisualProblem = (q) => {
+                if (!q.visualType) return null;
+                
+                switch (q.visualType) {
+                    case 'clock':
+                        return <AnalogClock hour={q.visualData.hour} minute={q.visualData.minute} />;
+                    case 'money':
+                        return <MoneyVisual count100={q.visualData.count100} count10={q.visualData.count10} count1={q.visualData.count1} />;
+                    case 'block':
+                        return <BlockVisual count={q.visualData.count} />;
+                    case 'shape':
+                        return <ShapeVisual shape={q.visualData.shape} />;
+                    default:
+                        return null;
+                }
+            };
+
+            const renderHeader = () => (
+                <div className="bg-sky-600 p-2 text-white flex justify-between items-center shadow-md z-30 h-14 flex-shrink-0">
+                    <div className="flex items-center gap-2">
+                        <div className="bg-sky-800 p-1.5 rounded-full border-2 border-yellow-400">
+                            <span className="text-xl">🦸</span>
+                        </div>
+                        <div>
+                            <div className="font-bold text-sm">Lv.{player.level} {player.name}</div>
+                            <div className="flex items-center gap-1 text-xs">
+                                <Heart size={14} className="text-red-400" fill="currentColor" />
+                                <div className="w-20 h-2.5 bg-gray-700 rounded-full overflow-hidden border border-gray-600">
+                                    <div className="bg-red-500 h-full transition-all duration-300" style={{ width: `${(player.hp / player.maxHp) * 100}%` }} />
+                                </div>
+                                <span>{player.hp}/{player.maxHp}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1 bg-yellow-500 px-2 py-0.5 rounded-full text-sky-900 font-bold text-sm">
+                            <span>💰</span>
+                            <span>{player.coins}</span>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const renderGameOver = () => (
+                <div className="absolute inset-0 z-50 bg-black/80 flex flex-col items-center justify-center text-white p-6 text-center animate-in fade-in duration-500">
+                    <h2 className="text-5xl font-extrabold text-red-500 mb-4 drop-shadow-lg">GAME OVER</h2>
+                    <div className="text-8xl mb-6 animate-pulse">💀</div>
+                    <p className="text-xl mb-8 font-bold">ゆうしゃは たおれてしまった...</p>
+                    <button 
+                        onClick={handleRestart}
+                        className="bg-red-600 hover:bg-red-500 text-white px-8 py-4 rounded-full font-bold text-xl shadow-lg transition-transform active:scale-95 flex items-center gap-2"
+                    >
+                        <RefreshCcw /> もういちど ちょうせん
+                    </button>
+                </div>
+            );
+
+            const renderLevelUp = () => (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-white p-8 rounded-3xl shadow-2xl text-center animate-bounce">
+                        <Star size={80} className="text-yellow-400 mx-auto mb-4 animate-spin-slow" fill="currentColor" />
+                        <h2 className="text-4xl font-bold text-orange-500 mb-2 tracking-widest">レベルアップ！</h2>
+                        <div className="text-2xl font-bold text-gray-700 mt-4">
+                            Lv.{player.level - 1} <span className="text-gray-400 mx-2">▶</span> <span className="text-blue-600 text-3xl">Lv.{player.level}</span>
+                        </div>
+                        <p className="text-gray-500 mt-2 font-bold">HPが ふえた！</p>
+                    </div>
+                </div>
+            );
+
+            const renderEncounter = () => {
+                const isBoss = currentMonster.isBoss;
+                const isRare = currentMonster.isRare;
+                
+                return (
+                    <div className={`absolute inset-0 z-40 flex flex-col items-center justify-center animate-in fade-in duration-300 ${isBoss ? 'bg-red-900/90' : 'bg-black/70'}`}>
+                        <div className={`text-white text-center ${isBoss ? 'animate-bounce' : 'animate-pulse'}`}>
+                            {isBoss && <div className="text-yellow-400 text-3xl font-extrabold mb-2 flex justify-center gap-2"><AlertTriangle /> きょうてき 出現！ <AlertTriangle /></div>}
+                            {isRare && <div className="text-yellow-300 text-3xl font-extrabold mb-2 flex justify-center gap-2"><Sparkles /> レアモンスター！ <Sparkles /></div>}
+                            
+                            <div className={`text-9xl mb-4 transition-transform duration-500 ${isBoss ? 'scale-150' : 'scale-100'}`}>
+                                <span className={`filter drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)] ${currentMonster.color === 'white' ? 'brightness-125' : ''}`}>{currentMonster.icon}</span>
+                            </div>
+                            <h2 className="text-4xl font-bold mb-2">{currentMonster.name}</h2>
+                            <p className="text-xl">があらわれた！</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            const renderHome = () => (
+                <div className="flex flex-col items-center justify-center h-full space-y-6 p-4 bg-blue-50 overflow-y-auto">
+                    <h1 className="text-4xl font-extrabold text-sky-600 tracking-wider drop-shadow-sm text-center">
+                        冬休み大冒険<br/><span className="text-2xl text-orange-500">ちえの勇者</span>
+                    </h1>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-md px-4">
+                        <button 
+                            onClick={() => startBattle('math')}
+                            className="bg-gradient-to-br from-blue-400 to-blue-600 text-white p-6 rounded-2xl shadow-xl transform transition active:scale-95 flex flex-col items-center gap-2 border-b-8 border-blue-800"
+                        >
+                            <Calculator size={40} />
+                            <span className="text-2xl font-bold">さんすう</span>
+                            <span className="text-sm opacity-90">けいさん・とけい</span>
+                        </button>
+
+                        <button 
+                            onClick={() => startBattle('jp')}
+                            className="bg-gradient-to-br from-red-400 to-red-600 text-white p-6 rounded-2xl shadow-xl transform transition active:scale-95 flex flex-col items-center gap-2 border-b-8 border-red-800"
+                        >
+                            <Book size={40} />
+                            <span className="text-2xl font-bold">こくご</span>
+                            <span className="text-sm opacity-90">かんじ・ことば</span>
+                        </button>
+                    </div>
+
+                    <div className="flex gap-4">
+                        <button onClick={() => setScreen('shop')} className="bg-yellow-400 text-yellow-900 px-6 py-3 rounded-full font-bold shadow flex items-center gap-2 hover:bg-yellow-300">
+                            <ShoppingBag /> おみせ
+                        </button>
+                        <button onClick={() => setScreen('profile')} className="bg-green-400 text-green-900 px-6 py-3 rounded-full font-bold shadow flex items-center gap-2 hover:bg-green-300">
+                            <Trophy /> もちもの
+                        </button>
+                    </div>
+                </div>
+            );
+
+            const renderBattle = () => {
+                if (!currentMonster || !question) return <div>Loading...</div>;
+
+                const bgClass = currentMonster.isBoss 
+                    ? 'bg-gradient-to-b from-purple-900 to-gray-800' 
+                    : 'bg-gradient-to-b from-sky-200 to-sky-100';
+                
+                // ダメージシェイクのロジックを修正
+                // 敵がダメージ(showHitEffect) -> animate-shake-damage
+                // 自分がダメージ(isCorrect===false) -> animate-shake-hard
+                const shakeClass = showHitEffect ? 'animate-shake-damage' : ((isCorrect === false && !isGameOver) || (player.hp === 0 && !isGameOver) ? 'animate-shake-hard' : '');
+
+                return (
+                    <div className={`flex flex-col h-full bg-slate-100 relative overflow-hidden ${timeLeft <= 5 ? 'animate-flash-red' : ''} ${shakeClass}`}>
+                        
+                        {timeLeft <= 5 && !isGameOver && (
+                            <div className="absolute inset-0 z-50 pointer-events-none animate-flash-red-overlay" />
+                        )}
+
+                        {/* Battle Header */}
+                        <div className="absolute top-0 left-0 right-0 h-14 z-30 flex items-center justify-between px-3 pt-2 pointer-events-none">
+                            <button onClick={() => setScreen('home')} className="bg-white/90 p-2 rounded-full shadow-md text-gray-600 active:scale-95 pointer-events-auto">
+                                <Home size={20} />
+                            </button>
+
+                            <div className="flex items-center gap-2 bg-white/90 px-3 py-1 rounded-full shadow-md border border-blue-100">
+                                <span className="text-lg">🦸</span>
+                                <div className="flex flex-col w-24">
+                                    <div className="flex justify-between text-[10px] font-bold text-gray-600 leading-none mb-0.5">
+                                        <span>HP</span>
+                                        <span>{player.hp}/{player.maxHp}</span>
+                                    </div>
+                                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                                        <div className="bg-gradient-to-r from-red-500 to-pink-500 h-full transition-all duration-300" style={{ width: `${(player.hp / player.maxHp) * 100}%` }} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className={`flex items-center gap-1 font-bold text-lg px-3 py-1 rounded-full shadow-md transition-all ${timeLeft <= 5 ? 'bg-red-600 text-white animate-pulse scale-110' : 'bg-white/90 text-orange-500'}`}>
+                                <Clock size={18} /> {timeLeft}
+                            </div>
+                        </div>
+
+                        {/* Battle Scene (Fixed Height Proportion) */}
+                        <div className={`flex-shrink-0 flex flex-col items-center justify-end pb-2 px-4 transition-colors duration-500 ${bgClass} h-[40%] min-h-[200px]`}>
+                            <div className="text-center mb-1 z-10 w-full max-w-xs relative">
+                                <div className={`text-lg font-extrabold drop-shadow-md ${currentMonster.isBoss ? 'text-white' : 'text-gray-800'}`}>{currentMonster.name}</div>
+                                <div className="w-full h-3 bg-gray-900/30 rounded-full mx-auto mt-0.5 overflow-hidden border-2 border-white/50 shadow-lg relative">
+                                    <div 
+                                        className="bg-gradient-to-r from-red-500 to-orange-500 h-full transition-all duration-300"
+                                        style={{ width: `${Math.max(0, (monsterHp / currentMonster.hp) * 100)}%` }}
+                                    ></div>
+                                </div>
+                                <div className={`text-[10px] font-bold ${currentMonster.isBoss ? 'text-gray-300' : 'text-gray-600'}`}>HP: {Math.max(0, monsterHp)}</div>
+                            </div>
+
+                            <div className={`relative flex justify-center items-center h-28 w-28 z-0 transition-transform duration-200 ${showHitEffect ? 'filter brightness-150' : ''}`}>
+                                <span className={`text-7xl filter drop-shadow-2xl transform transition-all duration-500 ${currentMonster.isBoss ? 'scale-125' : ''}`}>
+                                    {currentMonster.icon}
+                                </span>
+                                {/* 斬撃エフェクトは削除されました */}
+                                {isCorrect === false && <div className="absolute inset-0 bg-red-500/50 rounded-full animate-ping"></div>}
+                            </div>
+                        </div>
+
+                        {/* Question & Input Area (Takes Remaining Space) */}
+                        <div className="flex-1 bg-white rounded-t-3xl shadow-[0_-8px_20px_-5px_rgba(0,0,0,0.1)] p-3 z-10 -mt-4 flex flex-col overflow-hidden relative h-[60%]">
+                            <div className="flex-shrink-0 bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-2 mb-2 text-center shadow-inner max-h-[35%] overflow-y-auto">
+                                <p className="text-lg md:text-xl font-bold text-gray-800 whitespace-pre-wrap leading-tight break-words">
+                                    {question.question}
+                                </p>
+                                {renderVisualProblem(question)}
+                            </div>
+
+                            <div className="flex-1 flex flex-col justify-end w-full max-w-md mx-auto min-h-0"> 
+                                {question.type === 'calc' && (
+                                    <div className="flex flex-col gap-1.5 h-full justify-end pb-1">
+                                        <div className="text-3xl font-mono border-b-4 border-gray-300 w-full text-center py-0.5 mb-1 text-gray-700 bg-gray-50 rounded h-10 flex items-center justify-center">
+                                            {userAnswer}
+                                            <span className="animate-pulse ml-1 w-0.5 h-6 bg-gray-400"></span>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-1.5 w-full flex-1 min-h-0">
+                                            {[1,2,3,4,5,6,7,8,9].map(n => (
+                                                <button 
+                                                    key={n}
+                                                    onClick={() => setUserAnswer(prev => (prev.length < 3 ? prev + n : prev))}
+                                                    className="bg-white border-b-4 border-gray-200 text-blue-600 font-bold text-xl rounded-lg active:border-b-0 active:translate-y-1 shadow-sm touch-manipulation flex items-center justify-center active:bg-blue-50"
+                                                    disabled={!timerActive}
+                                                >
+                                                    {n}
+                                                </button>
+                                            ))}
+                                            <button 
+                                                onClick={() => setUserAnswer('')} 
+                                                className="bg-red-50 text-red-500 font-bold rounded-lg border-b-4 border-red-200 active:border-b-0 active:translate-y-1 touch-manipulation flex items-center justify-center"
+                                                disabled={!timerActive}
+                                            >
+                                                ✖
+                                            </button>
+                                            <button 
+                                                key={0}
+                                                onClick={() => setUserAnswer(prev => (prev.length < 3 ? prev + 0 : prev))}
+                                                className="bg-white border-b-4 border-gray-200 text-blue-600 font-bold text-xl rounded-lg active:border-b-0 active:translate-y-1 shadow-sm touch-manipulation flex items-center justify-center active:bg-blue-50"
+                                                disabled={!timerActive}
+                                            >
+                                                0
+                                            </button>
+                                            <button 
+                                                onClick={() => handleAnswer(userAnswer)} 
+                                                className="bg-blue-500 text-white font-bold rounded-lg text-lg border-b-4 border-blue-700 active:border-b-0 active:translate-y-1 touch-manipulation disabled:bg-gray-400 disabled:border-gray-500 flex items-center justify-center shadow-lg"
+                                                disabled={!timerActive || userAnswer === ''}
+                                            >
+                                                OK
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {question.type === 'select' && (
+                                    <div className="flex flex-col gap-3 h-full justify-center py-2">
+                                        {question.options.map((opt, i) => (
+                                            <button
+                                                key={i}
+                                                onClick={() => handleAnswer(opt)}
+                                                className="bg-white border-2 border-blue-100 text-blue-800 font-bold text-xl py-2 rounded-xl shadow-sm transition active:scale-95 active:bg-blue-50 touch-manipulation disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 flex-1 flex items-center justify-center"
+                                                disabled={!timerActive}
+                                            >
+                                                {opt}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {question.type === 'write' && (
+                                    <div className="flex flex-col gap-2 h-full justify-end pb-1">
+                                        <div className="flex gap-2 min-h-[44px] items-center justify-center p-2 bg-gray-100 rounded-xl w-full flex-shrink-0">
+                                            {userAnswer.split('').map((char, i) => (
+                                                <div key={i} className="w-9 h-9 bg-white rounded shadow flex items-center justify-center text-lg font-bold text-gray-800">
+                                                    {char}
+                                                </div>
+                                            ))}
+                                            {userAnswer.length === 0 && <span className="text-gray-400 text-xs">もじを えらんでね</span>}
+                                        </div>
+                                        
+                                        <div className="flex gap-1.5 flex-wrap justify-center flex-1 content-center overflow-y-auto">
+                                            {question.chars.map((char, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => setUserAnswer(prev => prev + char)}
+                                                    className="w-11 h-11 bg-white border-b-4 border-orange-200 rounded-lg text-xl font-bold text-orange-800 shadow active:border-b-0 active:translate-y-1 touch-manipulation disabled:bg-gray-200 disabled:text-gray-400 flex items-center justify-center"
+                                                    disabled={!timerActive}
+                                                >
+                                                    {char}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <div className="flex gap-2 w-full mt-1 h-12 flex-shrink-0">
+                                            <button 
+                                                onClick={() => setUserAnswer('')} 
+                                                className="flex-1 bg-gray-200 text-gray-600 font-bold rounded-lg disabled:text-gray-400 touch-manipulation text-sm"
+                                                disabled={!timerActive}
+                                            >
+                                                けす
+                                            </button>
+                                            <button 
+                                                onClick={() => handleAnswer(userAnswer)} 
+                                                className="flex-1 bg-orange-500 text-white font-bold rounded-lg text-lg shadow-lg active:scale-95 disabled:bg-gray-400 touch-manipulation"
+                                                disabled={!timerActive || userAnswer.length === 0}
+                                            >
+                                                できた！
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderShop = () => (
+                <div className="p-4 bg-yellow-50 h-full overflow-y-auto pb-20">
+                    <div className="flex items-center gap-2 mb-4">
+                        <button onClick={() => setScreen('home')} className="p-2 bg-white rounded-full shadow"><Home size={20}/></button>
+                        <h2 className="text-xl font-bold text-yellow-800">アイテムやさん</h2>
+                        <div className="ml-auto flex items-center gap-1 bg-yellow-200 px-3 py-1 rounded-full font-bold">
+                            💰 {player.coins}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        {ITEMS.map(item => {
+                            const owned = item.type !== 'consumable' && player.items.find(i => i.id === item.id);
+                            return (
+                                <div key={item.id} className={`bg-white p-3 rounded-xl shadow-md flex flex-col items-center text-center ${owned ? 'opacity-50 grayscale' : ''}`}>
+                                    <div className="text-3xl mb-1">{item.icon}</div>
+                                    <div className="font-bold text-gray-800 text-sm">{item.name}</div>
+                                    <div className="text-[10px] text-gray-500 mb-2">
+                                        {item.type === 'weapon' ? `こうげき +${item.power}` : item.type === 'armor' ? `ぼうぎょ +${item.defense}` : 'HPをぜんかいふく'}
+                                    </div>
+                                    {owned ? (
+                                        <div className="text-green-600 font-bold text-xs">うりきれ</div>
+                                    ) : (
+                                        <button 
+                                            onClick={() => buyItem(item)}
+                                            className={`px-3 py-1 rounded-full text-xs font-bold shadow w-full ${player.coins < item.cost ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-yellow-400 text-yellow-900 hover:bg-yellow-300'}`}
+                                            disabled={player.coins < item.cost}
+                                        >
+                                            {item.cost} コイン
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                    
+                    {message && (
+                        <div className="fixed bottom-4 left-4 right-4 bg-black/80 text-white p-3 rounded-lg text-center animate-bounce z-50">
+                            {message}
+                        </div>
+                    )}
+                </div>
+            );
+
+            const renderProfile = () => (
+                <div className="p-4 bg-green-50 h-full overflow-y-auto pb-20">
+                    <div className="flex items-center gap-2 mb-4">
+                        <button onClick={() => setScreen('home')} className="p-2 bg-white rounded-full shadow"><Home size={20}/></button>
+                        <h2 className="text-xl font-bold text-green-800">ゆうしゃの記録</h2>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-2xl shadow-lg mb-4 text-center">
+                        <div className="text-5xl mb-2">🦸</div>
+                        <div className="text-xl font-bold text-gray-800">{player.name}</div>
+                        <div className="text-sky-600 font-bold mb-3">レベル {player.level}</div>
+                        
+                        <div className="flex justify-center mb-3">
+                            <div className="flex items-center gap-2 bg-red-100 px-4 py-1 rounded-full">
+                                <Heart className="text-red-500" fill="currentColor" size={18} />
+                                <span className="font-bold text-lg">{player.hp} / {player.maxHp}</span>
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                            <div className="bg-gray-100 p-2 rounded-xl flex flex-col items-center">
+                                <Sword className="text-gray-500 mb-1" size={16} />
+                                <div className="text-gray-500">こうげき力</div>
+                                <div className="font-bold text-lg">{1 + player.items.filter(i => i.type === 'weapon').reduce((a,c)=>a+c.power,0)}</div>
+                            </div>
+                            <div className="bg-gray-100 p-2 rounded-xl flex flex-col items-center">
+                                <Shield className="text-gray-500 mb-1" size={16} />
+                                <div className="text-gray-500">ぼうぎょ力</div>
+                                <div className="font-bold text-lg">{player.items.filter(i => i.type === 'armor').reduce((a,c)=>a+c.defense,0)}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 className="font-bold text-green-800 mb-2 ml-2 flex items-center gap-2"><ShoppingBag size={18}/> もちもの</h3>
+                    <div className="grid grid-cols-4 gap-2">
+                        {player.items.filter(i => i.type !== 'consumable').length === 0 && <div className="col-span-4 text-center text-gray-400 py-4 bg-white rounded-xl text-sm">そうびを もっていません</div>}
+                        {player.items.filter(i => i.type !== 'consumable').map((item, idx) => (
+                            <div key={idx} className="bg-white p-1 rounded-xl shadow flex flex-col items-center justify-center aspect-square relative">
+                                <span className="text-2xl">{item.icon}</span>
+                                <span className="absolute bottom-0 right-0 text-[10px] bg-gray-200 px-1 rounded-tl">
+                                    {item.type === 'weapon' ? `+${item.power}` : `+${item.defense}`}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+
+            // アドレスバー対策のラッパー（100dvh）
+            return (
+                <div className="w-full max-w-md mx-auto h-[100dvh] max-h-[100dvh] bg-white overflow-hidden font-sans text-gray-900 select-none flex flex-col relative shadow-2xl">
+                    <div className="flex-1 overflow-hidden relative">
+                        {screen === 'home' && renderHome()}
+                        {screen === 'battle' && renderBattle()}
+                        {screen === 'shop' && renderShop()}
+                        {screen === 'profile' && renderProfile()}
+                    </div>
+
+                    {isGameOver && renderGameOver()}
+                    {showLevelUp && renderLevelUp()}
+                    {showEncounter && renderEncounter()}
+                </div>
+            );
+        }
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<WinterAdventure />);
+    </script>
+</body>
+</html>
