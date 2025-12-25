@@ -155,9 +155,9 @@ export const BattleScreen = ({
 
                             {/* Input Display Buffer */}
                             {(question.type === 'calc' || question.type === 'write') && (
-                                <div className="h-16 flex items-center justify-center mb-2">
-                                    <div className="bg-gray-100 border-2 border-gray-300 rounded-xl px-6 py-2 min-w-[120px] text-center">
-                                        <span className="text-3xl font-black text-slate-700 tracking-widest min-h-[40px] block">
+                                <div className="h-12 flex items-center justify-center mb-1">
+                                    <div className="bg-gray-100 border-2 border-gray-300 rounded-lg px-6 py-1 min-w-[120px] text-center">
+                                        <span className="text-2xl font-black text-slate-700 tracking-widest min-h-[32px] block">
                                             {inputValue || <span className="text-gray-300 opacity-50">?</span>}
                                         </span>
                                     </div>
@@ -179,10 +179,10 @@ export const BattleScreen = ({
                                         key={i}
                                         onClick={() => onAnswer(opt)}
                                         className={`
-                                            py-4 px-2 rounded-xl text-xl font-bold shadow-sm border-b-4 active:border-b-0 active:translate-y-1 transition-all
-                                            ${isCorrect === true && opt === question.answer ? 'bg-green-500 text-white border-green-700' :
+                                    py-4 px-2 rounded-xl text-xl font-bold shadow-sm border-b-4 active:border-b-0 active:translate-y-1 transition-all
+                                    ${isCorrect === true && opt === question.answer ? 'bg-green-500 text-white border-green-700' :
                                                 isCorrect === false ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'}
-                                        `}
+                                `}
                                     >
                                         {opt}
                                     </button>
@@ -202,9 +202,9 @@ export const BattleScreen = ({
                                 <button
                                     onClick={handleSubmit}
                                     className={`
-                                        bg-blue-500 text-white border-b-4 border-blue-700 rounded-lg py-2 font-bold text-lg active:border-b-0 active:translate-y-0.5
-                                        ${inputValue.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}
-                                    `}
+                                bg-blue-500 text-white border-b-4 border-blue-700 rounded-lg py-2 font-bold text-lg active:border-b-0 active:translate-y-0.5
+                                ${inputValue.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}
+                            `}
                                     disabled={inputValue.length === 0}
                                 >
                                     これで OK！
@@ -220,9 +220,9 @@ export const BattleScreen = ({
                                         key={i}
                                         onClick={() => handleInput(char)}
                                         className={`
-                                            aspect-square rounded-xl text-xl font-bold shadow-sm border-b-4 active:border-b-0 active:translate-y-1 transition-all
-                                             bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 flex items-center justify-center
-                                        `}
+                                    aspect-square rounded-xl text-xl font-bold shadow-sm border-b-4 active:border-b-0 active:translate-y-1 transition-all
+                                     bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 flex items-center justify-center
+                                `}
                                     >
                                         {char}
                                     </button>
@@ -237,7 +237,7 @@ export const BattleScreen = ({
                                     <button
                                         key={num}
                                         onClick={() => handleInput(num.toString())}
-                                        className="h-14 rounded-lg bg-blue-50 border-blue-200 border-b-4 font-bold text-2xl text-blue-600 active:border-b-0 active:translate-y-0.5 active:bg-blue-100 flex items-center justify-center shadow-sm transition-all"
+                                        className="h-11 rounded-lg bg-blue-50 border-blue-200 border-b-4 font-bold text-xl text-blue-600 active:border-b-0 active:translate-y-0.5 active:bg-blue-100 flex items-center justify-center shadow-sm transition-all"
                                     >
                                         {num}
                                     </button>
@@ -245,13 +245,13 @@ export const BattleScreen = ({
                                 {/* Bottom Row: Delete, 0, OK */}
                                 <button
                                     onClick={handleBackspace}
-                                    className="h-14 rounded-lg bg-red-50 border-red-200 border-b-4 font-bold text-lg text-red-500 active:border-b-0 active:translate-y-0.5 active:bg-red-100 flex items-center justify-center shadow-sm transition-all"
+                                    className="h-11 rounded-lg bg-red-50 border-red-200 border-b-4 font-bold text-base text-red-500 active:border-b-0 active:translate-y-0.5 active:bg-red-100 flex items-center justify-center shadow-sm transition-all"
                                 >
                                     けす
                                 </button>
                                 <button
                                     onClick={() => handleInput('0')}
-                                    className="h-14 rounded-lg bg-blue-50 border-blue-200 border-b-4 font-bold text-2xl text-blue-600 active:border-b-0 active:translate-y-0.5 active:bg-blue-100 flex items-center justify-center shadow-sm transition-all"
+                                    className="h-11 rounded-lg bg-blue-50 border-blue-200 border-b-4 font-bold text-xl text-blue-600 active:border-b-0 active:translate-y-0.5 active:bg-blue-100 flex items-center justify-center shadow-sm transition-all"
                                 >
                                     0
                                 </button>
@@ -259,11 +259,11 @@ export const BattleScreen = ({
                                     onClick={handleSubmit}
                                     disabled={inputValue.length === 0}
                                     className={`
-                                        h-14 rounded-lg border-b-4 font-bold text-xl flex items-center justify-center shadow-sm transition-all
-                                        ${inputValue.length > 0
+                                h-11 rounded-lg border-b-4 font-bold text-lg flex items-center justify-center shadow-sm transition-all
+                                ${inputValue.length > 0
                                             ? 'bg-blue-500 border-blue-700 text-white active:border-b-0 active:translate-y-0.5 hover:bg-blue-600'
                                             : 'bg-gray-200 border-gray-300 text-gray-400 cursor-not-allowed'}
-                                    `}
+                            `}
                                 >
                                     OK
                                 </button>

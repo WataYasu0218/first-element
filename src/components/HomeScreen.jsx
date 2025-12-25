@@ -78,8 +78,8 @@ export const HomeScreen = ({ player, onStartBattle, onOpenBook, items, onBuyItem
             </div>
 
             {shopOpen && (
-                <div className="absolute inset-x-0 bottom-0 top-auto bg-white rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)] p-6 z-20 animate-in slide-in-from-bottom duration-300 max-h-[60%] overflow-y-auto w-full max-w-md mx-auto">
-                    <div className="flex justify-between items-center mb-4">
+                <div className="absolute inset-x-0 bottom-0 top-auto bg-white rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)] p-6 z-20 animate-in slide-in-from-bottom duration-300 max-h-[80%] flex flex-col w-full max-w-md mx-auto">
+                    <div className="flex justify-between items-center mb-4 flex-shrink-0">
                         <h3 className="font-bold text-lg flex items-center gap-2">
                             <ShoppingBag className="w-5 h-5 text-orange-500" />
                             道具屋
@@ -87,7 +87,7 @@ export const HomeScreen = ({ player, onStartBattle, onOpenBook, items, onBuyItem
                         <div className="text-sm font-bold bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">{player.coins} G</div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-2">
+                    <div className="flex-1 overflow-y-auto min-h-0 space-y-2 pb-2">
                         {items.map(item => {
                             const hasItem = player.items.some(i => i.id === item.id);
                             return (
@@ -95,29 +95,32 @@ export const HomeScreen = ({ player, onStartBattle, onOpenBook, items, onBuyItem
                                     key={item.id}
                                     onClick={() => onBuyItem(item)}
                                     disabled={hasItem && item.type !== 'consumable'}
-                                    className={`flex items-center gap-3 p-3 rounded-xl border-b-2 text-left transition-all active:scale-95
+                                    className={`flex items-center gap-3 p-3 rounded-xl border-b-2 text-left transition-all active:scale-95 w-full
                                         ${hasItem && item.type !== 'consumable' ? 'bg-gray-100 border-gray-200 opacity-60' : 'bg-orange-50 border-orange-200 hover:bg-orange-100'}`}
                                 >
-                                    <div className="text-2xl w-10 text-center">{item.icon}</div>
-                                    <div className="flex-1">
-                                        <div className="font-bold text-gray-800">{item.name}</div>
-                                        <div className="text-xs text-gray-500">
+                                    <div className="text-2xl w-10 text-center flex-shrink-0">{item.icon}</div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-bold text-gray-800 truncate">{item.name}</div>
+                                        <div className="text-xs text-gray-500 truncate">
                                             {item.type === 'weapon' && `こうげき +${item.power}`}
                                             {item.type === 'armor' && `ぼうぎょ +${item.defense}`}
                                             {item.effect === 'heal' && `HP全かいふく`}
                                         </div>
                                     </div>
-                                    <div className="font-bold text-orange-600 w-16 text-right">{hasItem && item.type !== 'consumable' ? '済' : `${item.cost}G`}</div>
+                                    <div className="font-bold text-orange-600 w-16 text-right flex-shrink-0">{hasItem && item.type !== 'consumable' ? '済' : `${item.cost}G`}</div>
                                 </button>
                             );
                         })}
                     </div>
-                    <button
-                        onClick={() => setShopOpen(false)}
-                        className="mt-6 w-full py-3 bg-gray-200 text-gray-600 font-bold rounded-xl"
-                    >
-                        とじる
-                    </button>
+
+                    <div className="pt-4 mt-auto border-t border-gray-100 flex-shrink-0">
+                        <button
+                            onClick={() => setShopOpen(false)}
+                            className="w-full py-3 bg-gray-200 text-gray-600 font-bold rounded-xl active:bg-gray-300 transition-colors"
+                        >
+                            とじる
+                        </button>
+                    </div>
                 </div>
             )}
 
