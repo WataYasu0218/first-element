@@ -14,7 +14,7 @@ export const BattleScreen = ({
                 <h2 className="text-5xl font-black text-center mb-4 text-red-100 drop-shadow-lg scale-150 animate-bounce">
                     {monster.isBoss ? '強敵 出現！' : 'レアモン 出現！'}
                 </h2>
-                <div className="text-9xl mt-8 animate-ping">{monster.icon}</div>
+
             </div>
         );
     }
@@ -173,7 +173,7 @@ export const BattleScreen = ({
 
                         {/* Answer Options: SELECT TYPE (One-Click) */}
                         {question.type === 'select' && (
-                            <div className="grid grid-cols-2 gap-3" style={{ gridTemplateColumns: question.options && question.options.length === 3 ? 'repeat(3, 1fr)' : '1fr 1fr' }}>
+                            <div key={question.question} className="grid grid-cols-2 gap-3" style={{ gridTemplateColumns: question.options && question.options.length === 3 ? 'repeat(3, 1fr)' : '1fr 1fr' }}>
                                 {question.options.map((opt, i) => (
                                     <button
                                         key={i}
