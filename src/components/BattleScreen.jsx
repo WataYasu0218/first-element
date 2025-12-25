@@ -146,7 +146,7 @@ export const BattleScreen = ({
             </div>
 
             {/* Controls */}
-            <div className="bg-white rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.1)] p-6 z-20 animate-in slide-in-from-bottom duration-300">
+            <div className="bg-white rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.1)] p-3 z-20 animate-in slide-in-from-bottom duration-300">
                 {question && (
                     <div className="max-w-md mx-auto">
                         <div className="text-center mb-4">
@@ -230,14 +230,14 @@ export const BattleScreen = ({
                             </div>
                         )}
 
-                        {/* Num Pad for Calc (3x4 Layout) */}
+                        {/* Num Pad for Calc (Compact Layout) */}
                         {question.type === 'calc' && (
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-3 gap-1">
                                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
                                     <button
                                         key={num}
                                         onClick={() => handleInput(num.toString())}
-                                        className="aspect-[4/3] rounded-xl bg-blue-50 border-blue-200 border-b-4 font-bold text-2xl text-blue-600 active:border-b-0 active:translate-y-0.5 active:bg-blue-100 flex items-center justify-center shadow-sm transition-all"
+                                        className="h-14 rounded-lg bg-blue-50 border-blue-200 border-b-4 font-bold text-2xl text-blue-600 active:border-b-0 active:translate-y-0.5 active:bg-blue-100 flex items-center justify-center shadow-sm transition-all"
                                     >
                                         {num}
                                     </button>
@@ -245,13 +245,13 @@ export const BattleScreen = ({
                                 {/* Bottom Row: Delete, 0, OK */}
                                 <button
                                     onClick={handleBackspace}
-                                    className="aspect-[4/3] rounded-xl bg-red-50 border-red-200 border-b-4 font-bold text-lg text-red-500 active:border-b-0 active:translate-y-0.5 active:bg-red-100 flex items-center justify-center shadow-sm transition-all"
+                                    className="h-14 rounded-lg bg-red-50 border-red-200 border-b-4 font-bold text-lg text-red-500 active:border-b-0 active:translate-y-0.5 active:bg-red-100 flex items-center justify-center shadow-sm transition-all"
                                 >
                                     けす
                                 </button>
                                 <button
                                     onClick={() => handleInput('0')}
-                                    className="aspect-[4/3] rounded-xl bg-blue-50 border-blue-200 border-b-4 font-bold text-2xl text-blue-600 active:border-b-0 active:translate-y-0.5 active:bg-blue-100 flex items-center justify-center shadow-sm transition-all"
+                                    className="h-14 rounded-lg bg-blue-50 border-blue-200 border-b-4 font-bold text-2xl text-blue-600 active:border-b-0 active:translate-y-0.5 active:bg-blue-100 flex items-center justify-center shadow-sm transition-all"
                                 >
                                     0
                                 </button>
@@ -259,7 +259,7 @@ export const BattleScreen = ({
                                     onClick={handleSubmit}
                                     disabled={inputValue.length === 0}
                                     className={`
-                                        aspect-[4/3] rounded-xl border-b-4 font-bold text-xl flex items-center justify-center shadow-sm transition-all
+                                        h-14 rounded-lg border-b-4 font-bold text-xl flex items-center justify-center shadow-sm transition-all
                                         ${inputValue.length > 0
                                             ? 'bg-blue-500 border-blue-700 text-white active:border-b-0 active:translate-y-0.5 hover:bg-blue-600'
                                             : 'bg-gray-200 border-gray-300 text-gray-400 cursor-not-allowed'}
