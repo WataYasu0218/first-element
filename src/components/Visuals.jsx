@@ -24,15 +24,15 @@ export const AnalogClock = ({ hour, minute }) => {
 
 export const MoneyVisual = ({ count100, count10, count1 }) => {
     return (
-        <div className="flex flex-wrap justify-center gap-1 my-1 max-w-[200px] mx-auto">
+        <div className="flex flex-wrap justify-center gap-1 my-1 max-w-[180px] mx-auto">
             {[...Array(count100)].map((_, i) => (
-                <div key={`100-${i}`} className="w-9 h-9 rounded-full bg-gray-200 border-2 border-gray-400 flex items-center justify-center font-bold text-gray-600 text-xs shadow-sm">100</div>
+                <div key={`100-${i}`} className="w-7 h-7 rounded-full bg-gray-200 border-2 border-gray-400 flex items-center justify-center font-bold text-gray-600 text-[10px] shadow-sm">100</div>
             ))}
             {[...Array(count10)].map((_, i) => (
-                <div key={`10-${i}`} className="w-8 h-8 rounded-full bg-orange-300 border-2 border-orange-500 flex items-center justify-center font-bold text-orange-800 text-xs shadow-sm">10</div>
+                <div key={`10-${i}`} className="w-6 h-6 rounded-full bg-orange-300 border-2 border-orange-500 flex items-center justify-center font-bold text-orange-800 text-[10px] shadow-sm">10</div>
             ))}
             {[...Array(count1)].map((_, i) => (
-                <div key={`1-${i}`} className="w-6 h-6 rounded-full bg-gray-100 border-2 border-gray-300 flex items-center justify-center font-bold text-gray-500 text-[10px] shadow-sm">1</div>
+                <div key={`1-${i}`} className="w-5 h-5 rounded-full bg-gray-100 border-2 border-gray-300 flex items-center justify-center font-bold text-gray-500 text-[8px] shadow-sm">1</div>
             ))}
         </div>
     );
@@ -40,9 +40,9 @@ export const MoneyVisual = ({ count100, count10, count1 }) => {
 
 export const BlockVisual = ({ count }) => {
     return (
-        <div className="flex flex-wrap justify-center gap-1 my-2 max-w-[150px] mx-auto">
+        <div className="flex flex-wrap justify-center gap-1 my-1 max-w-[120px] mx-auto">
             {[...Array(count)].map((_, i) => (
-                <div key={i} className="w-7 h-7 bg-blue-400 border-b-4 border-r-4 border-blue-600 rounded-sm"></div>
+                <div key={i} className="w-5 h-5 bg-blue-400 border-b-4 border-r-4 border-blue-600 rounded-sm"></div>
             ))}
         </div>
     );
