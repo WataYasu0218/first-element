@@ -190,8 +190,8 @@ export const BattleScreen = ({
                             </div>
                         )}
 
-                        {/* Control Buttons for Buffered Input */}
-                        {(question.type === 'calc' || question.type === 'write') && (
+                        {/* Control Buttons for Buffered Input (Write Only) */}
+                        {question.type === 'write' && (
                             <div className="grid grid-cols-2 gap-3 mb-3">
                                 <button
                                     onClick={handleBackspace}
@@ -230,22 +230,43 @@ export const BattleScreen = ({
                             </div>
                         )}
 
-                        {/* Num Pad for Calc */}
+                        {/* Num Pad for Calc (3x4 Layout) */}
                         {question.type === 'calc' && (
-                            <div className="grid grid-cols-5 gap-2">
-                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(num => (
+                            <div className="grid grid-cols-3 gap-2">
+                                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
                                     <button
                                         key={num}
                                         onClick={() => handleInput(num.toString())}
-                                        className={`
-                                            aspect-square rounded-xl bg-blue-50 border-blue-200 border-b-4 font-bold text-xl text-blue-600 
-                                            active:border-b-0 active:translate-y-0.5 active:bg-blue-100 
-                                            flex items-center justify-center shadow-sm transition-all
-                                        `}
+                                        className="aspect-[4/3] rounded-xl bg-blue-50 border-blue-200 border-b-4 font-bold text-2xl text-blue-600 active:border-b-0 active:translate-y-0.5 active:bg-blue-100 flex items-center justify-center shadow-sm transition-all"
                                     >
                                         {num}
                                     </button>
                                 ))}
+                                {/* Bottom Row: Delete, 0, OK */}
+                                <button
+                                    onClick={handleBackspace}
+                                    className="aspect-[4/3] rounded-xl bg-red-50 border-red-200 border-b-4 font-bold text-lg text-red-500 active:border-b-0 active:translate-y-0.5 active:bg-red-100 flex items-center justify-center shadow-sm transition-all"
+                                >
+                                    けす
+                                </button>
+                                <button
+                                    onClick={() => handleInput('0')}
+                                    className="aspect-[4/3] rounded-xl bg-blue-50 border-blue-200 border-b-4 font-bold text-2xl text-blue-600 active:border-b-0 active:translate-y-0.5 active:bg-blue-100 flex items-center justify-center shadow-sm transition-all"
+                                >
+                                    0
+                                </button>
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={inputValue.length === 0}
+                                    className={`
+                                        aspect-[4/3] rounded-xl border-b-4 font-bold text-xl flex items-center justify-center shadow-sm transition-all
+                                        ${inputValue.length > 0
+                                            ? 'bg-blue-500 border-blue-700 text-white active:border-b-0 active:translate-y-0.5 hover:bg-blue-600'
+                                            : 'bg-gray-200 border-gray-300 text-gray-400 cursor-not-allowed'}
+                                    `}
+                                >
+                                    OK
+                                </button>
                             </div>
                         )}
                     </div>
