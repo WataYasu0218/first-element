@@ -116,14 +116,14 @@ export const BattleScreen = ({
 
                 {/* Monster Image/Icon */}
                 <div className={`cursor-pointer transition-transform duration-100 relative z-0
-                    ${showHitEffect ? 'animate-shake-damage' : 'animate-bounce'} 
+                    ${showHitEffect ? 'animate-shake-damage' : ''} 
                     ${isCorrect === false ? 'scale-110' : ''}`}
                 >
                     {monster.image ? (
                         <img
                             src={monster.image}
                             alt={monster.name}
-                            className="w-48 h-48 object-contain drop-shadow-xl"
+                            className="w-48 h-48 object-contain drop-shadow-xl mix-blend-multiply"
                             onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
                         />
                     ) : null}
